@@ -14,7 +14,7 @@
 	<GameTooltip name="LootTracker_Tooltip" inherits="GameTooltipTemplate" frameStrata="TOOLTIP" parent="UIParent" hidden="true"/>
 	<Button name="LootTracker_ListButtonTemplate" virtual="true">
 		<Size>
-			<AbsDimension x="960" y="16"/>
+			<AbsDimension x="660" y="16"/>
 		</Size>
 		<Scripts>
 			<OnLoad>
@@ -47,7 +47,7 @@
 		</NormalText>
 		<HighlightTexture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD">
 			<Size>
-				<AbsDimension x="960" y="16"/>
+				<AbsDimension x="660" y="16"/>
 			</Size>
 			<Anchors>
 				<Anchor point="TOP">
@@ -63,7 +63,7 @@
 			<Layer level="OVERLAY">
 				<FontString name="$parentTextTimestamp" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="200" y="10"/>
+						<AbsDimension x="150" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
@@ -75,60 +75,60 @@
 				</FontString>
 				<FontString name="$parentTextPlayername" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="200" y="10"/>
+						<AbsDimension x="100" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
 							<Offset>
-								<AbsDimension x="200" y="0"/>
+								<AbsDimension x="150" y="0"/>
 							</Offset>
 						</Anchor>
 					</Anchors> 
 				</FontString>
 				<FontString name="$parentTextItemName" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="300" y="10"/>
+						<AbsDimension x="200" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
 							<Offset>
-								<AbsDimension x="400" y="0"/>
+								<AbsDimension x="250" y="0"/>
 							</Offset>
 						</Anchor>
 					</Anchors> 
 				</FontString>
 				<FontString name="$parentTextCost" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="100" y="10"/>
+						<AbsDimension x="80" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
 							<Offset>
-								<AbsDimension x="700" y="0"/>
+								<AbsDimension x="450" y="0"/>
 							</Offset>
 						</Anchor>
 					</Anchors> 
 				</FontString>
 				<FontString name="$parentTextOffspec" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="80" y="10"/>
+						<AbsDimension x="70" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
 							<Offset>
-								<AbsDimension x="800" y="0"/>
+								<AbsDimension x="530" y="0"/>
 							</Offset>
 						</Anchor>
 					</Anchors> 
 				</FontString>
 				<FontString name="$parentTextDE" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
-						<AbsDimension x="80" y="10"/>
+						<AbsDimension x="60" y="10"/>
 					</Size>
 					<Anchors>
 						<Anchor point="LEFT">
 							<Offset>
-								<AbsDimension x="880" y="0"/>
+								<AbsDimension x="600" y="0"/>
 							</Offset>
 						</Anchor>
 					</Anchors> 
@@ -150,8 +150,10 @@
 				LootTracker_RaidIDListButton_OnClick(arg1);
 			</OnClick>
 			<OnEnter>
+				LootTracker_RaidIDListButton_OnEnter();
 			</OnEnter>
 			<OnLeave>
+				LootTracker_RaidIDListButton_OnLeave();
 			</OnLeave>
 		</Scripts>
 		<NormalText name="$parentText" inherits="GameFontNormalSmall" justifyH="LEFT">
@@ -311,7 +313,7 @@
 	
 	<Frame name="LootTracker_BrowseFrame" frameStrata="HIGH" toplevel="true" parent="UIParent" movable="true" enableMouse="true" hidden="true" clampedToScreen="true">
 		<Size>
-			<AbsDimension x="1012" y="440"/>
+			<AbsDimension x="712" y="440"/>
 		</Size>
 		<Anchors>
 			<Anchor point="TOPLEFT">
@@ -364,7 +366,7 @@
 				</Texture>
 				<Texture name="$parentTop" file="Interface\AuctionFrame\UI-AuctionFrame-Bid-Top">
 					<Size>
-						<AbsDimension x="500" y="256"/>
+						<AbsDimension x="200" y="256"/>
 					</Size>
 					<Anchors>
 						<Anchor point="TOPLEFT">
@@ -400,7 +402,7 @@
 				</Texture>
  				<Texture name="$parentBot" file="Interface\AuctionFrame\UI-AuctionFrame-Bid-Bot">
 					<Size>
-						<AbsDimension x="500" y="256"/>
+						<AbsDimension x="200" y="256"/>
 					</Size>
 					<Anchors>
 						<Anchor point="TOPLEFT">
@@ -502,7 +504,7 @@
 				<Anchors>
 					<Anchor point="LEFT" relativeTo="LootTracker_RaidIDButton" relativePoint="RIGHT">
 						<Offset>
-							<AbsDimension x="475" y="0"/>
+							<AbsDimension x="175" y="0"/>
 						</Offset>
 					</Anchor>
 				</Anchors>
@@ -514,7 +516,7 @@
 			</Button>
 			<Frame name="LootTracker_ListBrowse">
 				<Size>
-					<AbsDimension x="910" y="447"/>
+					<AbsDimension x="610" y="447"/>
 				</Size>
 				<Anchors>
 					<Anchor point="TOPLEFT"/>
@@ -522,7 +524,7 @@
 				<Frames>
 					<ScrollFrame name="LootTracker_ListScrollFrame" inherits="FauxScrollFrameTemplate">
 						<Size>
-							<AbsDimension x="780" y="335"/>
+							<AbsDimension x="480" y="335"/>
 						</Size>
 						<Anchors>
 							<Anchor point="TOPRIGHT">
@@ -856,7 +858,7 @@
 					</Button>
 					<Frame name="$parentCoverInfo">
 						<Size>
-							<AbsDimension x="665" y="26"/>
+							<AbsDimension x="365" y="26"/>
 						</Size>
 						<Anchors>
 							<Anchor point="RIGHT" relativeTo="LootTracker_ListSearchButton" relativePoint="LEFT">
@@ -898,7 +900,7 @@
 					</Frame>
 					<Frame name="LootTracker_SortBar"> 
 						<Size>
-							<AbsDimension x="960" y="15" />
+							<AbsDimension x="660" y="15" />
 						</Size>
 						<Anchors>
 							<Anchor	point="TOPLEFT">
@@ -918,7 +920,7 @@
 						<Frames>
 							<Button name="LootTracker_SortTimestamp" inherits="LootTracker_SortButtonTemplate" text="Timestamp">
 								<Size>
-									<AbsDimension x="200" y="16"/>
+									<AbsDimension x="150" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextTimestamp" relativePoint="TOPLEFT">
@@ -935,7 +937,7 @@
 							</Button>
 							<Button name="LootTracker_SortPlayername" inherits="LootTracker_SortButtonTemplate" text="Playername">
 								<Size>
-									<AbsDimension x="200" y="16"/>
+									<AbsDimension x="100" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextPlayername" relativePoint="TOPLEFT">
@@ -952,7 +954,7 @@
 							</Button>						
 							<Button name="LootTracker_SortItemName" inherits="LootTracker_SortButtonTemplate" text="ItemName">
 								<Size>
-									<AbsDimension x="300" y="16"/>
+									<AbsDimension x="150" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextItemName" relativePoint="TOPLEFT">
@@ -969,7 +971,7 @@
 							</Button>						
 							<Button name="LootTracker_SortCost" inherits="LootTracker_SortButtonTemplate" text="Cost">
 								<Size>
-									<AbsDimension x="100" y="16"/>
+									<AbsDimension x="80" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextCost" relativePoint="TOPLEFT">
@@ -986,7 +988,7 @@
 							</Button>						
 							<Button name="LootTracker_SortOffspec" inherits="LootTracker_SortButtonTemplate" text="Offspec">
 								<Size>
-									<AbsDimension x="80" y="16"/>
+									<AbsDimension x="70" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextOffspec" relativePoint="TOPLEFT">
@@ -1003,7 +1005,7 @@
 							</Button>						
 							<Button name="LootTracker_SortDE" inherits="LootTracker_SortButtonTemplate" text="DE">
 								<Size>
-									<AbsDimension x="80" y="16"/>
+									<AbsDimension x="60" y="16"/>
 								</Size>
 								<Anchors>
 									<Anchor point="BOTTOMLEFT" relativeTo="LootTracker_List1TextDE" relativePoint="TOPLEFT">
@@ -1570,9 +1572,9 @@
 					 </OnLoad>
 				 </Scripts>
 			 </CheckButton>
-			<Button name="LootTracker_OptionsReset" inherits="UIPanelButtonTemplate" text="Reset Database">
+			<Button name="LootTracker_OptionsReset" inherits="UIPanelButtonTemplate" text="Reset DB">
 				<Size>
-					<AbsDimension x="120" y="22"/>
+					<AbsDimension x="100" y="22"/>
 				</Size>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption8" relativePoint="BOTTOMLEFT">
@@ -1585,8 +1587,37 @@
 					<OnClick>
 						LootTracker_OptionsReset_OnClick();
 					</OnClick>
+					<OnEnter>
+						LootTracker_OptionsReset_OnEnter()
+					</OnEnter>
+					<OnLeave>
+						LootTracker_OptionsReset_OnLeave()
+					</OnLeave>
 				</Scripts>
 			</Button>
+			<Button name="LootTracker_OptionsRecalc" inherits="UIPanelButtonTemplate" text="Recalc DB">
+				<Size>
+					<AbsDimension x="100" y="22"/>
+				</Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="LootTracker_OptionsReset" relativePoint="RIGHT">
+						<Offset>
+							<AbsDimension x="5" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_OptionsRecalc_OnClick();
+					</OnClick>
+					<OnEnter>
+						LootTracker_OptionsRecalc_OnEnter()
+					</OnEnter>
+					<OnLeave>
+						LootTracker_OptionsRecalc_OnLeave()
+					</OnLeave>					
+				</Scripts>
+			</Button>			
 		</Frames>
 		<Scripts>
 			<OnShow>

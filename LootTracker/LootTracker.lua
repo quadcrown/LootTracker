@@ -1,3 +1,6 @@
+local CostDB,browse_rarityhexlink,cost,cost_orig,guildName,lootid,oldplayergp,raidfound,raidid,rarity,sortdirection,
+sortfield,timestamp_detail,timestamp_raidid,you,zonename
+
 local LootTrackerOptions_DefaultSettings = {
 	enabled = true,
 	uncommon = false,
@@ -38,6 +41,18 @@ local function LootTracker_Initialize()
 			LootTrackerBlacklist[i] = LootTrackerBlacklist_DefaultSettings[i]
 		end
 	end
+  -- if shootyepgp is present and loaded
+  if sepgp and sepgp_prices and sepgp_prices.GetPrice and sepgp_progress then
+    LootTracker_GetCosts = function(itemID) 
+    	local cost, offspec
+    	cost = sepgp_prices:GetPrice(itemID,sepgp_progress) or 0
+    	offspec = math.floor(cost*(sepgp_discount or 0.5))
+    	return cost, offspec
+    end
+  end
+  if sepgp and sepgp.get_ep_v3 and sepgp.get_gp_v3 then
+    LootTracker_GetPlayerEPGP = function(playername) oldplayergp = (sepgp:get_gp_v3(playername) or sepgp.VARS.basegp) end
+  end
 end
 	
 function LootTracker_OnLoad()
@@ -154,7 +169,7 @@ function LootTracker_SlashCommand(msg)
 
 	if msg == "help" then
 		DEFAULT_CHAT_FRAME:AddMessage("LootTracker usage:")
-		DEFAULT_CHAT_FRAME:AddMessage("/lt or /loottracker { help |  enable | disable | toggle | show | options | reset | uncommon | common | rare | epic | legendary | timestamp | cost}")
+		DEFAULT_CHAT_FRAME:AddMessage("/lt or /loottracker { help |  enable | disable | toggle | show | options | reset | recalc | uncommon | common | rare | epic | legendary | timestamp | cost}")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9help|r: prints out this help")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9enable|r: enables loot tracking")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9disable|r: disables loot tracking")
@@ -162,6 +177,7 @@ function LootTracker_SlashCommand(msg)
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9show|r: shows the current configuration")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9options|r: shows the option menu")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9reset|r: resets the loot database")
+		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9recalc|r: recalculates GP for loot database")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9uncommon|r: toggles tracking uncommon loot")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9common|r: toggles tracking common loot")
 		DEFAULT_CHAT_FRAME:AddMessage(" - |cff9482c9rare|r: toggles tracking rare loot")
@@ -242,6 +258,8 @@ function LootTracker_SlashCommand(msg)
 		
 	elseif msg == "reset" then
 		LootTracker_ResetDB()
+	elseif msg == "recalc" then
+		LootTracker_RecalcDB()
 	elseif msg == "common" then		
 		if LootTrackerOptions["common"] == true then
 			LootTrackerOptions["common"] = false
@@ -303,6 +321,7 @@ function LootTracker_SlashCommand(msg)
 		if (LootTracker_BrowseFrame:IsVisible() or LootTracker_RaidIDFrame:IsVisible()) then
 			LootTracker_BrowseFrame:Hide()
 			LootTracker_RaidIDFrame:Hide()
+      DEFAULT_CHAT_FRAME:AddMessage("|cffa335eeLootTracker|r: Type \'/lt help\' or \'/loottracker help\' for more options.")
 		else
 			ShowUIPanel(LootTracker_BrowseFrame, 1)
 		end
@@ -322,7 +341,7 @@ function LootTracker_GetCosts(itemid)
 	if CostDB and itemid then
 		for k, v in pairs(CostDB) do
 			if k == "Item"..itemid then
-				return v
+				return v, v/2
 			end
 		end
 	end
@@ -334,6 +353,17 @@ end
 ---------------------------------------------------------
 --LootTracker Database Functions
 ---------------------------------------------------------
+function LootTracker_GetPlayerEPGP(playername)
+  --Player GP
+  for i = 1, GetNumGuildMembers(true) do
+    local guild_name, _, _, _, _, _, _, guild_officernote, _, _ = GetGuildRosterInfo(i)
+    local _, _, guild_ep, guild_gp = string.find(guild_officernote, LootTracker_pattern_epgpextract)
+      if guild_name == playername then
+        oldplayergp = guild_gp
+      end
+  end
+end
+
 function LootTracker_AddtoDB(playername, itemname, itemid, rarity, offspec, de)
 
 	--clear variables
@@ -354,15 +384,8 @@ function LootTracker_AddtoDB(playername, itemname, itemid, rarity, offspec, de)
 		LootTrackerDB[raidid] = {}
 	end
 	
-	--Player GP
-	for i = 1, GetNumGuildMembers(true) do
-		local guild_name, _, _, _, _, _, _, guild_officernote, _, _ = GetGuildRosterInfo(i)
-		local _, _, guild_ep, guild_gp = string.find(guild_officernote, LootTracker_pattern_epgpextract)
-			if guild_name == playername then
-				oldplayergp = guild_gp
-			end
-	end
-	
+  LootTracker_GetPlayerEPGP(playername)
+
 	--calculate costs
 	cost = LootTracker_GetCosts(itemid)
 	
@@ -462,7 +485,25 @@ function LootTracker_ResetDB()
 	LootTrackerDB = {}
 	LootTracker_RaidIDScrollFrame_Update()
 	LootTracker_BuildBrowseTable()
-	DEFAULT_CHAT_FRAME:AddMessage("Loot Database has been reset")
+	DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Loot Database has been reset")
+end
+
+function LootTracker_RecalcDB()
+	for raidid,items in pairs(LootTrackerDB) do
+		for _,item in ipairs(items) do
+			local cost,offspec = LootTracker_GetCosts(tonumber(item[LootTracker_dbfield_itemid]))
+			if item[LootTracker_dbfield_de] == true then
+				item[LootTracker_dbfield_cost] = "0"
+			elseif item[LootTracker_dbfield_offspec] == true then
+				item[LootTracker_dbfield_cost] = offspec
+			else
+				item[LootTracker_dbfield_cost] = cost
+			end
+		end
+	end
+	LootTracker_RaidIDScrollFrame_Update()
+	LootTracker_BuildBrowseTable()
+	DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Loot GP has been recalculated")	
 end
 
 function LootTracker_ExportRaid(raidid, timestamp, cost)
@@ -634,13 +675,12 @@ function LootTracker_BuildBrowseTable()
 			table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
 		end
 		
-		--call for GUI Update
-		LootTracker_ListScrollFrame_Update()
-	
 	else
 		getglobal("LootTracker_TotalLootText"):SetText("no Raid found: " .. raidid)
 		getglobal("LootTracker_TotalLootTextValue"):SetText("0 items")
 	end
+	--call for GUI Update
+	LootTracker_ListScrollFrame_Update()
 end
 
 function LootTracker_ListScrollFrame_Update()
@@ -788,7 +828,10 @@ function LootTracker_ListButton_OnEnter(index)
 end
 
 function LootTracker_ListButton_OnLeave()
-	LootTracker_Tooltip:Hide()	
+	if LootTracker_Tooltip:IsOwned(this) then
+		LootTracker_Tooltip:ClearLines()
+		LootTracker_Tooltip:Hide()	
+	end
 end
 
 function LootTracker_ExportButton_OnClick()
@@ -812,14 +855,79 @@ end
 ---------------------------------------------------------
 
 --fires when a line in the Raid ID browse frame list is clicked
-function LootTracker_RaidIDListButton_OnClick()
-
-	local raidid_browse = getglobal(this:GetName().."TextRaidID"):GetText();
-	getglobal("LootTracker_RaidIDBox"):SetText(raidid_browse)
+function LootTracker_RaidIDListButton_OnClick(button)
+  local raidid_browse = getglobal(this:GetName().."TextRaidID"):GetText();
+  if button == "RightButton" and IsControlKeyDown() then
+    LootTrackerDB[raidid_browse] = nil
+    getglobal("LootTracker_RaidIDBox"):SetText("")
+  elseif button == "LeftButton" and IsShiftKeyDown() then
+    local _,_,ts_source,zone_source = string.find(raidid_browse,"^(%d+%-%d+%-%d+)%s+(.+)$")
+    if not (zone_source) then
+      DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Merged raids can\'t be source for merge.")
+      return
+    end
+    local raidid_mergetarget
+    for i,id in ipairs(LootTracker_RaidIDBrowseTable) do
+      if id == raidid_browse then
+        raidid_mergetarget = LootTracker_RaidIDBrowseTable[i+1]
+        if raidid_mergetarget ~= nil then
+          local _,_,ts_target,zone_target = string.find(raidid_mergetarget,"^(%d+%-%d+%-%d+)%s+(.+)$")
+          if not (zone_target) then
+            DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Merged raids can\'t be target for merge.")
+            return
+          end
+          if zone_source == zone_target then
+            local raidid_merged = string.format("%s(%s)%s",ts_target,ts_source,zone_target)
+            if LootTrackerDB[raidid_merged] == nil then LootTrackerDB[raidid_merged] = {} end
+            local i, loot = next(LootTrackerDB[raidid_browse],nil)
+            while (i) do
+              table.insert(LootTrackerDB[raidid_merged],loot)
+              i, loot = next(LootTrackerDB[raidid_browse], i)
+            end
+            LootTrackerDB[raidid_browse] = nil
+            i, loot = next(LootTrackerDB[raidid_mergetarget],nil)
+            while (i) do
+              table.insert(LootTrackerDB[raidid_merged],loot)
+              i, loot = next(LootTrackerDB[raidid_mergetarget],i)
+            end
+            LootTrackerDB[raidid_mergetarget] = nil
+            getglobal("LootTracker_RaidIDBox"):SetText(raidid_merged)
+            break
+          else
+            DEFAULT_CHAT_FRAME:AddMessage("LootTracker: You can only merge raids to the same zone.")
+            return
+          end
+        else
+          DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Raid below doesn\'t exist or not visible. Scroll?")
+          return
+        end
+      end
+    end
+  else
+		getglobal("LootTracker_RaidIDBox"):SetText(raidid_browse)
+  end
 	
 	HideUIPanel(LootTracker_RaidIDFrame, 1)
 	LootTracker_BuildBrowseTable()
 	
+end
+
+function LootTracker_RaidIDListButton_OnEnter()
+	LootTracker_Tooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+	LootTracker_Tooltip:SetText("RaidID Browser")
+	--LootTracker_Tooltip:AddLine(getglobal("LootTracker_RaidIDList"..(tostring(this:GetID()-1)).."TextRaidID"):GetText())
+	--LootTracker_Tooltip:AddLine(getglobal(this:GetName().."TextRaidID"):GetText())
+	LootTracker_Tooltip:AddDoubleLine("Click","Load this RaidID in browser",255/255,140/255,0)
+	LootTracker_Tooltip:AddDoubleLine("Shift-Click","Merge RaidID into the one below",255/255,140/255,0)
+	LootTracker_Tooltip:AddDoubleLine("Ctrl-Right-Click","Remove this RaidID (|cffff0000No Undo|r)",255/255,140/255,0)
+	LootTracker_Tooltip:Show()
+end
+
+function LootTracker_RaidIDListButton_OnLeave()
+	if LootTracker_Tooltip:IsOwned(this) then
+		LootTracker_Tooltip:ClearLines()
+		LootTracker_Tooltip:Hide()
+	end
 end
 
 --Raid ID Browser ScrollBar
@@ -898,25 +1006,15 @@ function LootTracker_ItemEditCheckButton_OnClick(id)
 	--offspec
 	if id == 1 then
 		if LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec] == true then
-		
+			local newcost = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec]	= false
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.raidid)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.index)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.itemname)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.originalindex)
-			
-			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]*2
+			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = newcost
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_newplayergp] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_oldplayergp] + LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]
 
 		elseif LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec] == false then
-			
+			local _,newcost = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec]	= true
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.raidid)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.index)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.itemname)
-			--DEFAULT_CHAT_FRAME:AddMessage(LootTracker_ItemEditDB.originalindex)
-			
-			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]/2
+			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = newcost
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_newplayergp] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_oldplayergp] + LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]
 		end
 	--disenchant
@@ -924,7 +1022,7 @@ function LootTracker_ItemEditCheckButton_OnClick(id)
 		if LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_de] == true then
 		
 			--recalc costs
-			cost_orig = LootTracker_GetCosts(LootTracker_ItemEditDB.itemid)
+			cost_orig = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
 			
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_de]	= false
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = cost_orig
@@ -1077,4 +1175,36 @@ end
 
 function LootTracker_OptionsReset_OnClick() 
 	LootTracker_ResetDB()
+end
+
+function LootTracker_OptionsReset_OnEnter()
+  LootTracker_Tooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+  LootTracker_Tooltip:SetText("Reset DB")
+  LootTracker_Tooltip:AddLine("Deletes whole Raid DB (|cffff0000No Undo|r)",1,1,1,1)
+  LootTracker_Tooltip:Show()  
+end
+
+function LootTracker_OptionsReset_OnLeave()
+  if LootTracker_Tooltip:IsOwned(this) then
+    LootTracker_Tooltip:ClearLines()
+    LootTracker_Tooltip:Hide()  
+  end  
+end
+
+function LootTracker_OptionsRecalc_OnClick()
+	LootTracker_RecalcDB()
+end
+
+function LootTracker_OptionsRecalc_OnEnter()
+  LootTracker_Tooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+  LootTracker_Tooltip:SetText("Recalculate DB")
+  LootTracker_Tooltip:AddLine("Updates GP costs for all Raids to current price list",1,1,1,1)
+  LootTracker_Tooltip:Show() 
+end
+
+function LootTracker_OptionsRecalc_OnLeave()
+  if LootTracker_Tooltip:IsOwned(this) then
+    LootTracker_Tooltip:ClearLines()
+    LootTracker_Tooltip:Hide()  
+  end  
 end
