@@ -43,7 +43,9 @@ local function LootTracker_Initialize()
 	end
   -- if shootyepgp is present and loaded
   if sepgp and sepgp_prices and sepgp_prices.GetPrice and sepgp_progress then
-    LootTracker_GetCosts = function(itemID) 
+    LootTracker_GetCosts = function(itemID)
+    	local itemID = tonumber(itemID)
+    	if not (itemID) then return 0,0 end
     	local cost, offspec
     	cost = sepgp_prices:GetPrice(itemID,sepgp_progress) or 0
     	offspec = math.floor(cost*(sepgp_discount or 0.5))
@@ -346,7 +348,7 @@ function LootTracker_GetCosts(itemid)
 		end
 	end
 	
-	return 0
+	return 0, 0
 end
 
 
@@ -491,7 +493,7 @@ end
 function LootTracker_RecalcDB()
 	for raidid,items in pairs(LootTrackerDB) do
 		for _,item in ipairs(items) do
-			local cost,offspec = LootTracker_GetCosts(tonumber(item[LootTracker_dbfield_itemid]))
+			local cost,offspec = LootTracker_GetCosts(item[LootTracker_dbfield_itemid])
 			if item[LootTracker_dbfield_de] == true then
 				item[LootTracker_dbfield_cost] = "0"
 			elseif item[LootTracker_dbfield_offspec] == true then
@@ -1006,13 +1008,13 @@ function LootTracker_ItemEditCheckButton_OnClick(id)
 	--offspec
 	if id == 1 then
 		if LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec] == true then
-			local newcost = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
+			local newcost = LootTracker_GetCosts(LootTracker_ItemEditDB.itemid)
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec]	= false
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = newcost
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_newplayergp] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_oldplayergp] + LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]
 
 		elseif LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec] == false then
-			local _,newcost = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
+			local _,newcost = LootTracker_GetCosts(LootTracker_ItemEditDB.itemid)
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_offspec]	= true
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = newcost
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_newplayergp] = LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_oldplayergp] + LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost]
@@ -1022,7 +1024,7 @@ function LootTracker_ItemEditCheckButton_OnClick(id)
 		if LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_de] == true then
 		
 			--recalc costs
-			cost_orig = LootTracker_GetCosts(tonumber(LootTracker_ItemEditDB.itemid))
+			cost_orig = LootTracker_GetCosts(LootTracker_ItemEditDB.itemid)
 			
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_de]	= false
 			LootTrackerDB[LootTracker_ItemEditDB.raidid][LootTracker_ItemEditDB.originalindex][LootTracker_dbfield_cost] = cost_orig
