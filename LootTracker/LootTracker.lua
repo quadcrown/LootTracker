@@ -680,6 +680,12 @@ function LootTracker_BuildBrowseTable()
 	else
 		getglobal("LootTracker_TotalLootText"):SetText("no Raid found: " .. raidid)
 		getglobal("LootTracker_TotalLootTextValue"):SetText("0 items")
+		if (arg1) and (arg1 == "LeftButton") then -- we came here from search button
+			if not LootTracker_RaidIDFrame:IsVisible() then
+				LootTracker_RaidIDScrollFrame_Update()
+				ShowUIPanel(LootTracker_RaidIDFrame, 1)
+			end
+		end
 	end
 	--call for GUI Update
 	LootTracker_ListScrollFrame_Update()

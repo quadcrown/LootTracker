@@ -1396,6 +1396,9 @@
 			</CheckButton>
 		</Frames>
 		<Scripts>
+			<OnLoad>
+				table.insert(UISpecialFrames,this:GetName())
+			</OnLoad>
 		</Scripts>
 	</Frame>
 	
