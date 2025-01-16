@@ -73,7 +73,8 @@ function LootTracker_OnLoad()
 	local MSG_PREFIX = "LootTracker"
 	
 	
-	LootTracker_pattern_playername = "^([^%s]+) receive" 
+	LootTracker_pattern_playername = "^([^%s]+) receive" -- master loot
+	LootTracker_pattern_groupwin = "^([^%s]+) won"      -- For group loot
 	LootTracker_pattern_itemname = "%[(.+)]"
 	LootTracker_pattern_itemid = "item:(%d+)"
 	LootTracker_pattern_rarityhex = "(.+)|c(.+)|H"
@@ -113,50 +114,54 @@ function LootTracker_OnEvent()
 		LootTracker_Initialize();
 	elseif event == "CHAT_MSG_LOOT" and arg1 and LootTrackerOptions["enabled"] == true then
 		
-		--check and ignore you create: 
-		if string.find(arg1, LootTracker_pattern_playername) then
-		
-			--extract the person who looted
-			local _, _, playername = string.find(arg1, LootTracker_pattern_playername)
-			if playername then
-				if playername == you then
-					playername = UnitName("player")
-				end
+		-- Match standard loot messages
+		local _, _, playername = string.find(arg1, LootTracker_pattern_playername)
+
+		-- Match group loot messages if no playername was found
+		if not playername then
+			_, _, playername = string.find(arg1, LootTracker_pattern_groupwin)
+		end
+
+		-- Proceed only if playername is found
+		if playername then
+			if playername == you then
+				playername = UnitName("player")
 			end
 			
-			--extract the itemname
+			-- Extract the item name
 			local _, _, itemname = string.find(arg1, LootTracker_pattern_itemname)
 			
-			--extract the item id
+			-- Extract the item ID
 			local _, _, itemid = string.find(arg1, LootTracker_pattern_itemid)
 
-			--extract rarity
+			-- Extract rarity
 			local _, _, _, rarityhex = string.find(arg1, LootTracker_pattern_rarityhex)
 			
-			--check if item is on the blacklist
+			-- Check if the item is on the blacklist
 			if not LootTracker_CheckBlacklist(itemname) then
 
-				--check rarity and add itemname to db
+				-- Check rarity and add itemname to the database
 				if rarityhex == LootTracker_color_common and LootTrackerOptions["common"] == true then
 					rarity = "common"
-					LootTracker_AddtoDB (playername, itemname, itemid, rarity)
+					LootTracker_AddtoDB(playername, itemname, itemid, rarity)
 				elseif rarityhex == LootTracker_color_uncommon and LootTrackerOptions["uncommon"] == true then
 					rarity = "uncommon"
-					LootTracker_AddtoDB (playername, itemname, itemid, rarity)
+					LootTracker_AddtoDB(playername, itemname, itemid, rarity)
 				elseif rarityhex == LootTracker_color_rare and LootTrackerOptions["rare"] == true then
 					rarity = "rare"
-					LootTracker_AddtoDB (playername, itemname, itemid, rarity)
+					LootTracker_AddtoDB(playername, itemname, itemid, rarity)
 				elseif rarityhex == LootTracker_color_epic and LootTrackerOptions["epic"] == true then
 					rarity = "epic"
-					LootTracker_AddtoDB (playername, itemname, itemid, rarity)
+					LootTracker_AddtoDB(playername, itemname, itemid, rarity)
 				elseif rarityhex == LootTracker_color_legendary and LootTrackerOptions["legendary"] == true then
 					rarity = "legendary"
-					LootTracker_AddtoDB (playername, itemname, tostring(itemid), rarity)
+					LootTracker_AddtoDB(playername, itemname, tostring(itemid), rarity)
 				end
 			end
 		end
 	end
 end
+
 
 function LootTracker_CheckBlacklist(itemname)
 	for k,v in ipairs(LootTrackerBlacklist) do
@@ -509,48 +514,112 @@ function LootTracker_RecalcDB()
 end
 
 function LootTracker_ExportRaid(raidid, timestamp, cost)
-	--check raidid
-	raidfound = false
-	if raidid and (string.len(raidid) >= 1) then
-		for k in pairs(LootTrackerDB) do
-			if k == raidid then
-				raidfound = true
-			end
-		end
-	end
-	
-	LootTracker_ExportData = nil
-	
-	if raidfound == true then
-		LootTracker_ExportData = raidid.."\r\n\r\n"
-		for index in LootTrackerDB[raidid] do
-			if timestamp == true then
-				LootTracker_ExportData = LootTracker_ExportData .. LootTrackerDB[raidid][index][LootTracker_dbfield_timestamp] .. " - "
-			end
-			LootTracker_ExportData = LootTracker_ExportData .. LootTrackerDB[raidid][index][LootTracker_dbfield_itemname]
-			if LootTrackerDB[raidid][index][LootTracker_dbfield_de] == true then
-				LootTracker_ExportData = LootTracker_ExportData .. ": disenchanted"
-			else
-				LootTracker_ExportData = LootTracker_ExportData  .. ": " .. LootTrackerDB[raidid][index][LootTracker_dbfield_playername]
-			end
-			if LootTrackerDB[raidid][index][LootTracker_dbfield_offspec] == true then
-				LootTracker_ExportData = LootTracker_ExportData .. " - offspec"
-			end
-			if cost and LootTrackerDB[raidid][index][LootTracker_dbfield_de] == false then
-				LootTracker_ExportData = LootTracker_ExportData  .. " - " .. LootTrackerDB[raidid][index][LootTracker_dbfield_cost]
-			end
-			LootTracker_ExportData = LootTracker_ExportData .. "\r\n"
-		end
-
-		LootTracker_ExportRaidFrameEditBox1:SetFont("Fonts\\FRIZQT__.TTF", "8")
-		LootTracker_ExportRaidFrameEditBox1Left:Hide()
-		LootTracker_ExportRaidFrameEditBox1Middle:Hide()
-		LootTracker_ExportRaidFrameEditBox1Right:Hide()
-		LootTracker_ExportRaidFrameEditBox1:SetText(LootTracker_ExportData)
-		
-		ShowUIPanel(LootTracker_ExportRaidFrame, 1)
-	end
+  -- Check if the raidid exists in DB
+  raidfound = false
+  if raidid and (string.len(raidid) >= 1) then
+    for k in pairs(LootTrackerDB) do
+      if k == raidid then
+        raidfound = true
+      end
+    end
+  end
+  
+  LootTracker_ExportData = nil
+  
+  if raidfound == true then
+    -- Step 1) Build a local itemsToExport table
+    local itemsToExport = {}
+    for index in LootTrackerDB[raidid] do
+      table.insert(itemsToExport, {
+        index   = index, 
+        item    = LootTrackerDB[raidid][index],
+      })
+    end
+    
+    -- Our order: Uncommon -> Common -> Rare -> Epic -> Legendary
+    local raritySortOrder = {
+      ["uncommon"]  = 1,
+      ["common"]    = 2,
+      ["rare"]      = 3,
+      ["epic"]      = 4,
+      ["legendary"] = 5
+    }
+    
+    -- Step 2) Sort items by rarity
+    table.sort(itemsToExport, function(a, b)
+      local rA = raritySortOrder[a.item[LootTracker_dbfield_rarity]] or 999
+      local rB = raritySortOrder[b.item[LootTracker_dbfield_rarity]] or 999
+      
+      -- If same rarity, you can either break the tie by item name or timestamp
+      if rA == rB then
+        -- Example: tie‐break by item name
+        local nameA = a.item[LootTracker_dbfield_itemname] or ""
+        local nameB = b.item[LootTracker_dbfield_itemname] or ""
+        return nameA < nameB
+      else
+        return rA < rB
+      end
+    end)
+    
+    -- Step 3) Build the output lines
+    local rarityLabels = {
+      ["common"]    = "[Common]",
+      ["uncommon"]  = "[Uncommon]",
+      ["rare"]      = "[Rare]",
+      ["epic"]      = "[Epic]",
+      ["legendary"] = "[Legendary]"
+    }
+    
+    LootTracker_ExportData = raidid .. "\r\n\r\n"
+    
+    for _, entry in ipairs(itemsToExport) do
+      local itemEntry = entry.item
+      
+      -- optional timestamp
+      if timestamp == true then
+        LootTracker_ExportData = LootTracker_ExportData 
+                              .. itemEntry[LootTracker_dbfield_timestamp] 
+                              .. " - "
+      end
+      
+      -- Add [Rarity] <ItemName>
+      local itemRarity = itemEntry[LootTracker_dbfield_rarity]
+      local rarityText = rarityLabels[itemRarity] or "[Unknown]"
+      LootTracker_ExportData = LootTracker_ExportData 
+                            .. rarityText 
+                            .. " " 
+                            .. itemEntry[LootTracker_dbfield_itemname]
+      
+      -- Player or Disenchanted
+      if itemEntry[LootTracker_dbfield_de] == true then
+        LootTracker_ExportData = LootTracker_ExportData .. ": disenchanted"
+      else
+        LootTracker_ExportData = LootTracker_ExportData 
+                              .. ": " 
+                              .. itemEntry[LootTracker_dbfield_playername]
+      end
+      
+      -- Offspec
+      if itemEntry[LootTracker_dbfield_offspec] == true then
+        LootTracker_ExportData = LootTracker_ExportData .. " - offspec"
+      end
+      
+      -- Cost
+      if cost and itemEntry[LootTracker_dbfield_de] == false then
+        LootTracker_ExportData = LootTracker_ExportData 
+                              .. " - " 
+                              .. itemEntry[LootTracker_dbfield_cost]
+      end
+      
+      LootTracker_ExportData = LootTracker_ExportData .. "\r\n"
+    end
+    
+    -- Place final text into the export box
+    LootTracker_ExportRaidFrameEditBox1:SetText(LootTracker_ExportData)
+    ShowUIPanel(LootTracker_ExportRaidFrame, 1)
+  end
 end
+
 
 ---------------------------------------------------------
 --LootTracker ItemBrowse Frame Functions
