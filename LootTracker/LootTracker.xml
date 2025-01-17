@@ -839,6 +839,27 @@
 							</OnClick>
 						</Scripts>
 					</Button>
+					<EditBox name="LootTracker_SearchBox" inherits="InputBoxTemplate" autoFocus="false">
+						<Size>
+							<AbsDimension x="160" y="16"/>
+						</Size>
+						<Anchors>
+							<!-- Anchor it near the bottom-left corner (or wherever you prefer) -->
+							<Anchor point="BOTTOMLEFT">
+								<Offset>
+									<AbsDimension x="23" y="17"/>
+								</Offset>
+							</Anchor>
+						</Anchors>
+						<Scripts>
+							<OnEnterPressed>
+								-- Run a function that filters the items based on what's typed
+								LootTracker_ApplySearchFilter()
+								this:ClearFocus()
+							</OnEnterPressed>
+							<!-- Optionally, handle OnEscapePressed, OnTextChanged, etc. -->
+						</Scripts>
+					</EditBox>
 					<Button name="LootTracker_ListSearchButton" inherits="UIPanelButtonTemplate" text="Search">
 						<Size>
 							<AbsDimension x="80" y="22"/>
