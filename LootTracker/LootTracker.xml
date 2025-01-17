@@ -43,7 +43,7 @@
 						<AbsDimension x="20" y="0"/>
 					</Offset>
 				</Anchor>
-			</Anchors> 
+			</Anchors>
 		</NormalText>
 		<HighlightTexture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD">
 			<Size>
@@ -83,7 +83,7 @@
 								<AbsDimension x="150" y="0"/>
 							</Offset>
 						</Anchor>
-					</Anchors> 
+					</Anchors>
 				</FontString>
 				<FontString name="$parentTextItemName" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
@@ -95,7 +95,7 @@
 								<AbsDimension x="250" y="0"/>
 							</Offset>
 						</Anchor>
-					</Anchors> 
+					</Anchors>
 				</FontString>
 				<FontString name="$parentTextCost" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
@@ -107,7 +107,7 @@
 								<AbsDimension x="450" y="0"/>
 							</Offset>
 						</Anchor>
-					</Anchors> 
+					</Anchors>
 				</FontString>
 				<FontString name="$parentTextOffspec" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
@@ -119,7 +119,7 @@
 								<AbsDimension x="530" y="0"/>
 							</Offset>
 						</Anchor>
-					</Anchors> 
+					</Anchors>
 				</FontString>
 				<FontString name="$parentTextDE" inherits="GameFontNormalSmall" justifyH="LEFT">
 					<Size>
@@ -131,12 +131,12 @@
 								<AbsDimension x="600" y="0"/>
 							</Offset>
 						</Anchor>
-					</Anchors> 
+					</Anchors>
 				</FontString>
 			</Layer>
 		</Layers>
 	</Button>
-	
+
 	<Button name="LootTracker_RaidIDListButton" virtual="true">
 		<Size>
 			<AbsDimension x="200" y="16"/>
@@ -166,7 +166,7 @@
 						<AbsDimension x="20" y="0"/>
 					</Offset>
 				</Anchor>
-			</Anchors> 
+			</Anchors>
 		</NormalText>
 		<HighlightTexture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD">
 			<Size>
@@ -199,7 +199,7 @@
 			</Layer>
 		</Layers>
 	</Button>
-	
+
 	<Button name="LootTracker_SortButtonTemplate" virtual="true">
 		<NormalText name="$parentText" inherits="GameFontHighlightSmall">
 			<Anchors>
@@ -246,7 +246,7 @@
 			</OnLoad>
 		</Scripts>
 	</Button>
-	
+
 	<CheckButton name="LootTracker_OptionCheckButton" virtual="true">
 		<HitRectInsets>
 			<AbsInset left="0" right="-100" top="0" bottom="0"/>
@@ -310,7 +310,7 @@
 			</OnClick>
 		</Scripts>
 	</CheckButton>
-	
+
 	<Frame name="LootTracker_BrowseFrame" frameStrata="HIGH" toplevel="true" parent="UIParent" movable="true" enableMouse="true" hidden="true" clampedToScreen="true">
 		<Size>
 			<AbsDimension x="712" y="440"/>
@@ -400,7 +400,7 @@
 						</Anchor>
 					</Anchors>
 				</Texture>
- 				<Texture name="$parentBot" file="Interface\AuctionFrame\UI-AuctionFrame-Bid-Bot">
+				<Texture name="$parentBot" file="Interface\AuctionFrame\UI-AuctionFrame-Bid-Bot">
 					<Size>
 						<AbsDimension x="200" y="256"/>
 					</Size>
@@ -437,7 +437,7 @@
 				</FontString>
 			</Layer>
 		</Layers>
-		<Scripts> 
+		<Scripts>
 			<OnShow>
 				LootTracker_Main_OnShow();
 			</OnShow>
@@ -449,7 +449,7 @@
 			<OnMouseUp>
 				LootTracker_Main_OnMouseUp(arg1);
 			</OnMouseUp>
-		</Scripts> 
+		</Scripts>
 		<Frames>
 			<Button name="LootTracker_ListCloseButton" inherits="UIPanelCloseButton">
 				<Anchors>
@@ -534,12 +534,12 @@
 							</Anchor>
 						</Anchors>
 						<Scripts>
-							 <OnVerticalScroll>
-								   FauxScrollFrame_OnVerticalScroll(16, LootTracker_ListScrollFrame_Update); 
-							 </OnVerticalScroll>
-							 <OnShow>
-								   LootTracker_ListScrollFrame_Update()
-							 </OnShow>
+							<OnVerticalScroll>
+								FauxScrollFrame_OnVerticalScroll(16, LootTracker_ListScrollFrame_Update);
+							</OnVerticalScroll>
+							<OnShow>
+								LootTracker_ListScrollFrame_Update()
+							</OnShow>
 						</Scripts>
 					</ScrollFrame>
 					<Button name="LootTracker_List1" inherits="LootTracker_ListButtonTemplate" id="1" hidden="true">
@@ -898,7 +898,7 @@
 							</Layer>
 						</Layers>
 					</Frame>
-					<Frame name="LootTracker_SortBar"> 
+					<Frame name="LootTracker_SortBar">
 						<Size>
 							<AbsDimension x="660" y="15" />
 						</Size>
@@ -951,7 +951,7 @@
 										LootTracker_SortPlayername_OnClick(arg1);
 									</OnClick>
 								</Scripts>
-							</Button>						
+							</Button>
 							<Button name="LootTracker_SortItemName" inherits="LootTracker_SortButtonTemplate" text="ItemName">
 								<Size>
 									<AbsDimension x="150" y="16"/>
@@ -968,7 +968,7 @@
 										LootTracker_SortItemName_OnClick(arg1);
 									</OnClick>
 								</Scripts>
-							</Button>						
+							</Button>
 							<Button name="LootTracker_SortCost" inherits="LootTracker_SortButtonTemplate" text="Cost">
 								<Size>
 									<AbsDimension x="80" y="16"/>
@@ -985,7 +985,7 @@
 										LootTracker_SortCost_OnClick(arg1);
 									</OnClick>
 								</Scripts>
-							</Button>						
+							</Button>
 							<Button name="LootTracker_SortOffspec" inherits="LootTracker_SortButtonTemplate" text="Offspec">
 								<Size>
 									<AbsDimension x="70" y="16"/>
@@ -1002,7 +1002,7 @@
 										LootTracker_SortOffspec_OnClick(arg1);
 									</OnClick>
 								</Scripts>
-							</Button>						
+							</Button>
 							<Button name="LootTracker_SortDE" inherits="LootTracker_SortButtonTemplate" text="DE">
 								<Size>
 									<AbsDimension x="60" y="16"/>
@@ -1019,7 +1019,7 @@
 										LootTracker_SortDE_OnClick(arg1);
 									</OnClick>
 								</Scripts>
-							</Button>						
+							</Button>
 						</Frames>
 					</Frame>
 				</Frames>
@@ -1051,7 +1051,8 @@
 				</FontString>
 			</Layer>
 		</Layers>
-		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">			<BackgroundInsets>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets>
 				<AbsInset bottom="4" left="4" right="4" top="4"></AbsInset>
 			</BackgroundInsets>
 			<TileSize>
@@ -1078,27 +1079,27 @@
 				<Size>
 					<AbsDimension x="20" y="158"/>
 				</Size>
-			<Anchors>
-				<Anchor point="TOPLEFT">
-					<Offset>
-						<AbsDimension x="0" y="-30"/>
-					</Offset>
-				</Anchor>
-				<Anchor point="BOTTOMRIGHT">
-					<Offset>
-						<AbsDimension x="-33" y="10"/>
-					</Offset>
-				</Anchor>
-			</Anchors>
-			<Scripts>
-				 <OnVerticalScroll>
-					   FauxScrollFrame_OnVerticalScroll(16, LootTracker_RaidIDScrollFrame_Update); 
-				 </OnVerticalScroll>
-				 <OnShow>
-					   LootTracker_RaidIDScrollFrame_Update()
-				 </OnShow>
-			</Scripts>
-		   </ScrollFrame>
+				<Anchors>
+					<Anchor point="TOPLEFT">
+						<Offset>
+							<AbsDimension x="0" y="-30"/>
+						</Offset>
+					</Anchor>
+					<Anchor point="BOTTOMRIGHT">
+						<Offset>
+							<AbsDimension x="-33" y="10"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnVerticalScroll>
+						FauxScrollFrame_OnVerticalScroll(16, LootTracker_RaidIDScrollFrame_Update);
+					</OnVerticalScroll>
+					<OnShow>
+						LootTracker_RaidIDScrollFrame_Update()
+					</OnShow>
+				</Scripts>
+			</ScrollFrame>
 			<Button name="LootTracker_RaidIDList1" inherits="LootTracker_RaidIDListButton" id="1" hidden="true">
 				<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" tile="true">
 					<TileSize>
@@ -1255,7 +1256,7 @@
 			</OnMouseUp>
 		</Scripts>
 	</Frame>
-	
+
 	<Frame name="LootTracker_ItemEditFrame" frameStrata="DIALOG" toplevel="true" parent="UIParent" movable="false" enableMouse="true" hidden="true" clampedToScreen="true">
 		<Size>
 			<AbsDimension x="500" y="150"/>
@@ -1343,7 +1344,8 @@
 				</FontString>
 			</Layer>
 		</Layers>
-		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">			<BackgroundInsets>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets>
 				<AbsInset bottom="4" left="4" right="4" top="4"></AbsInset>
 			</BackgroundInsets>
 			<TileSize>
@@ -1374,11 +1376,11 @@
 						</Offset>
 					</Anchor>
 				</Anchors>
-			<Scripts>
-				<OnLoad>
-					getglobal(this:GetName().."Text"):SetText("Offspec")
-				 </OnLoad>
-			 </Scripts>
+				<Scripts>
+					<OnLoad>
+						getglobal(this:GetName().."Text"):SetText("Offspec")
+					</OnLoad>
+				</Scripts>
 			</CheckButton>
 			<CheckButton id="2" inherits="LootTracker_ItemEditCheckButton" name="$parentOption2">
 				<Anchors>
@@ -1389,10 +1391,10 @@
 					</Anchor>
 				</Anchors>
 				<Scripts>
-				<OnLoad>
-					getglobal(this:GetName().."Text"):SetText("Disenchant")
-				 </OnLoad>
-			 </Scripts>
+					<OnLoad>
+						getglobal(this:GetName().."Text"):SetText("Disenchant")
+					</OnLoad>
+				</Scripts>
 			</CheckButton>
 		</Frames>
 		<Scripts>
@@ -1401,10 +1403,10 @@
 			</OnLoad>
 		</Scripts>
 	</Frame>
-	
+
 	<Frame name="LootTracker_OptionsFrame" frameStrata="DIALOG" toplevel="true" parent="UIParent" movable="false" enableMouse="true" hidden="true" clampedToScreen="true">
 		<Size>
-			<AbsDimension x="250" y="350"/>
+			<AbsDimension x="250" y="380"/>
 		</Size>
 		<Anchors>
 			<Anchor point="CENTER">
@@ -1463,124 +1465,138 @@
 				</Scripts>
 			</Button>
 			<CheckButton id="1" name="$parentOption1" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="15" y="-30"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Enable LootTracker")
-					 </OnLoad>
-			 </Scripts>
+					</OnLoad>
+				</Scripts>
 			</CheckButton>
 			<CheckButton id="2" name="$parentOption2" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption1" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Track |cffffffffcommon|r Loot")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="3" name="$parentOption3" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption2" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Track |cff1eff00uncommon|r Loot")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="4" name="$parentOption4" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption3" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Track |cff0070ddrare|r Loot")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="5" name="$parentOption5" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption4" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Track |cffa335eeepic|r Loot")
 
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="6" name="$parentOption6" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption5" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Track |cffff8000legendary|r Loot")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="7" name="$parentOption7" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption6" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Export with timestamps")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<CheckButton id="8" name="$parentOption8" inherits="LootTracker_OptionCheckButton">
-				 <Anchors> 
+				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentOption7" relativePoint="BOTTOMLEFT">
-					  <Offset>
+						<Offset>
 							<AbsDimension x="0" y="0"/>
-						 </Offset>
-					 </Anchor>
-				 </Anchors>      
+						</Offset>
+					</Anchor>
+				</Anchors>
 				<Scripts>
 					<OnLoad>
 						getglobal(this:GetName().."Text"):SetText("Export with GP price")
-					 </OnLoad>
-				 </Scripts>
-			 </CheckButton>
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
+			<CheckButton id="9" name="$parentOption9" inherits="LootTracker_OptionCheckButton">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentOption8" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						getglobal(this:GetName().."Text"):SetText("Sort Export by Rarity")
+					</OnLoad>
+				</Scripts>
+			</CheckButton>
 			<Button name="LootTracker_OptionsReset" inherits="UIPanelButtonTemplate" text="Reset DB">
 				<Size>
 					<AbsDimension x="100" y="22"/>
 				</Size>
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeTo="$parentOption8" relativePoint="BOTTOMLEFT">
+					<Anchor point="TOPLEFT" relativeTo="$parentOption9" relativePoint="BOTTOMLEFT">
 						<Offset>
 							<AbsDimension x="0" y="-10"/>
 						</Offset>
@@ -1618,9 +1634,9 @@
 					</OnEnter>
 					<OnLeave>
 						LootTracker_OptionsRecalc_OnLeave()
-					</OnLeave>					
+					</OnLeave>
 				</Scripts>
-			</Button>			
+			</Button>
 		</Frames>
 		<Scripts>
 			<OnShow>
@@ -1642,7 +1658,8 @@
 		</Anchors>
 		<Layers>
 		</Layers>
-		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">			<BackgroundInsets>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+			<BackgroundInsets>
 				<AbsInset bottom="4" left="4" right="4" top="4"></AbsInset>
 			</BackgroundInsets>
 			<EdgeSize>
@@ -1680,5 +1697,5 @@
 		<Scripts>
 		</Scripts>
 	</Frame>
-	
+
 </Ui>
