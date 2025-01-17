@@ -1,6 +1,11 @@
 # LootTracker
 Tracks loot in World of Warcraft 1.12
 
+## Changes in this fork
+- Added functionality to work when on group loot for logging loot
+- Added in sorting by rarity for exporting
+- Added a search box to search the current RaidID/loot list for items of interest
+
 ### You can import your own GP Cost / DKP Cost
 Just edit the table in the file LootTrackerGP.lua / You need the itemid and the price
 itemid can be found at http://db.vanillagaming.org/?item=22630
