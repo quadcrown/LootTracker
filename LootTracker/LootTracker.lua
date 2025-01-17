@@ -515,6 +515,20 @@ function LootTracker_RecalcDB()
 	DEFAULT_CHAT_FRAME:AddMessage("LootTracker: Loot GP has been recalculated")	
 end
 
+function LootTracker_ApplySearchFilter()
+  local searchBox = getglobal("LootTracker_SearchBox")
+  if not searchBox then return end
+
+  local searchText = searchBox:GetText()
+  if not searchText or searchText == "" then
+    -- If empty, show all items (no filter)
+    LootTracker_BuildBrowseTable(nil)
+  else
+    -- Pass the search text to the table-building function
+    LootTracker_BuildBrowseTable(searchText)
+  end
+end
+
 function LootTracker_ExportRaid(raidid, timestamp, cost)
   -- Check if the raidid is valid
   raidfound = false
@@ -666,112 +680,151 @@ function LootTracker_RaidIDButton_OnClick()
 	end
 end
 
-function LootTracker_BuildBrowseTable()
-	LootTracker_BrowseTable = {}
-	--read ReadSearch editbox
-	raidid = getglobal("LootTracker_RaidIDBox"):GetText()
-		
-	--check if raid exists
-	raidfound = false
-	if raidid and (string.len(raidid) >= 1) then
-		for k in pairs(LootTrackerDB) do
-			if k == raidid then
-				raidfound = true
-			end
-		end
-	end
-	
-	if raidfound == true then
+function LootTracker_BuildBrowseTable(searchTerm)
+  -- If no searchTerm is passed, treat it as an empty string (no filter).
+  if not searchTerm then
+    searchTerm = ""
+  end
+  
+  -- We'll do a case-insensitive search, so convert it to lowercase once.
+  local lowerTerm = string.lower(searchTerm)
 
-		for index in LootTrackerDB[raidid] do
-			LootTracker_BrowseTable[index] = {}
-			LootTracker_BrowseTable[index].timestamp = LootTrackerDB[raidid][index][LootTracker_dbfield_timestamp]
-			LootTracker_BrowseTable[index].playername = LootTrackerDB[raidid][index][LootTracker_dbfield_playername]
-
-			if LootTrackerDB[raidid][index][LootTracker_dbfield_rarity] == "common" then
-				browse_rarityhexlink = LootTracker_color_common
-			elseif LootTrackerDB[raidid][index][LootTracker_dbfield_rarity] == "uncommon" then
-				browse_rarityhexlink = LootTracker_color_uncommon
-			elseif LootTrackerDB[raidid][index][LootTracker_dbfield_rarity] == "rare" then
-				browse_rarityhexlink = LootTracker_color_rare
-			elseif LootTrackerDB[raidid][index][LootTracker_dbfield_rarity] == "epic" then
-				browse_rarityhexlink = LootTracker_color_epic
-			elseif LootTrackerDB[raidid][index][LootTracker_dbfield_rarity] == "legendary" then
-				browse_rarityhexlink = LootTracker_color_legendary
-			end
-			--building the itemlink
-			browse_itemlink = "|c" .. browse_rarityhexlink .. "|Hitem:" .. LootTrackerDB[raidid][index][LootTracker_dbfield_itemid] .. ":0:0:0|h[" .. LootTrackerDB[raidid][index][LootTracker_dbfield_itemname] .. "]|h|r"
-			
-			LootTracker_BrowseTable[index].itemname = browse_itemlink
-			-- for sorting
-			LootTracker_BrowseTable[index].itemnamenolink = LootTrackerDB[raidid][index][LootTracker_dbfield_itemname]
-			
-			--rest
-			LootTracker_BrowseTable[index].cost = LootTrackerDB[raidid][index][LootTracker_dbfield_cost]
-			LootTracker_BrowseTable[index].offspec = LootTrackerDB[raidid][index][LootTracker_dbfield_offspec]
-			LootTracker_BrowseTable[index].de = LootTrackerDB[raidid][index][LootTracker_dbfield_de]
-			--for tooltip
-			LootTracker_BrowseTable[index].itemid = LootTrackerDB[raidid][index][LootTracker_dbfield_itemid]
-			--for itemedit GUI
-			LootTracker_BrowseTable[index].oldplayergp = LootTrackerDB[raidid][index][LootTracker_dbfield_oldplayergp]
-			LootTracker_BrowseTable[index].newplayergp = LootTrackerDB[raidid][index][LootTracker_dbfield_newplayergp]
-			LootTracker_BrowseTable[index].raidid = raidid
-			LootTracker_BrowseTable[index].originalindex = index
-		end
-	
-		--sorting
-		if sortfield == LootTracker_dbfield_timestamp then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
-			elseif sortdirection == "descending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp > b.timestamp end)
-			end
-		elseif sortfield == LootTracker_dbfield_playername then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.playername < b.playername end)
-			elseif sortdirection == "descending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.playername > b.playername end)
-			end
-		elseif sortfield == LootTracker_dbfield_itemname then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.itemnamenolink < b.itemnamenolink end)
-			elseif sortdirection == "descending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return a.itemnamenolink > b.itemnamenolink end)
-			end
-		elseif sortfield == LootTracker_dbfield_cost then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return tonumber(a.cost) < tonumber(b.cost) end)
-			elseif sortdirection == "descending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return tonumber(a.cost) > tonumber(b.cost) end)
-			end
-		elseif sortfield == LootTracker_dbfield_offspec then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.offspec) < tostring(b.offspec) end)
-			elseif sortdirection == "descending" then
-			table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.offspec) > tostring(b.offspec) end)
-			end
-		elseif sortfield == LootTracker_dbfield_de then
-			if sortdirection == "ascending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.de) < tostring(b.de) end)
-			elseif sortdirection == "descending" then
-				table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.de) > tostring(b.de) end)
-			end
-		else
-			table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
-		end
-		
-	else
-		getglobal("LootTracker_TotalLootText"):SetText("no Raid found: " .. raidid)
-		getglobal("LootTracker_TotalLootTextValue"):SetText("0 items")
-		if (arg1) and (arg1 == "LeftButton") then -- we came here from search button
-			if not LootTracker_RaidIDFrame:IsVisible() then
-				LootTracker_RaidIDScrollFrame_Update()
-				ShowUIPanel(LootTracker_RaidIDFrame, 1)
-			end
-		end
-	end
-	--call for GUI Update
-	LootTracker_ListScrollFrame_Update()
+  -- Start fresh
+  LootTracker_BrowseTable = {}
+  
+  -- Read the RaidID from the edit box
+  raidid = getglobal("LootTracker_RaidIDBox"):GetText()
+  
+  -- Check if the raid exists
+  raidfound = false
+  if raidid and (string.len(raidid) >= 1) then
+    for k in pairs(LootTrackerDB) do
+      if k == raidid then
+        raidfound = true
+      end
+    end
+  end
+  
+  if raidfound == true then
+    -- Loop over items in the chosen RaidID
+    for index in LootTrackerDB[raidid] do
+      -- Pull out fields we'll need
+      local timestampVal = LootTrackerDB[raidid][index][LootTracker_dbfield_timestamp]
+      local playername   = LootTrackerDB[raidid][index][LootTracker_dbfield_playername] or ""
+      local itemname     = LootTrackerDB[raidid][index][LootTracker_dbfield_itemname] or ""
+      local itemid       = LootTrackerDB[raidid][index][LootTracker_dbfield_itemid]
+      local rarityKey    = LootTrackerDB[raidid][index][LootTracker_dbfield_rarity]
+      local costVal      = LootTrackerDB[raidid][index][LootTracker_dbfield_cost]
+      local offspecVal   = LootTrackerDB[raidid][index][LootTracker_dbfield_offspec]
+      local deVal        = LootTrackerDB[raidid][index][LootTracker_dbfield_de]
+      
+      -- Convert both itemname and playername to lowercase for matching
+      local itemnameLower   = string.lower(itemname)
+      local playernameLower = string.lower(playername)
+      
+      -- If no search, or if searchTerm is found in either item or player
+      if lowerTerm == "" 
+         or string.find(itemnameLower, lowerTerm, 1, true)
+         or string.find(playernameLower, lowerTerm, 1, true)
+      then
+        -- Build color code for item link
+        local browse_rarityhexlink
+        if rarityKey == "common" then
+          browse_rarityhexlink = LootTracker_color_common
+        elseif rarityKey == "uncommon" then
+          browse_rarityhexlink = LootTracker_color_uncommon
+        elseif rarityKey == "rare" then
+          browse_rarityhexlink = LootTracker_color_rare
+        elseif rarityKey == "epic" then
+          browse_rarityhexlink = LootTracker_color_epic
+        elseif rarityKey == "legendary" then
+          browse_rarityhexlink = LootTracker_color_legendary
+        else
+          -- fallback, maybe white
+          browse_rarityhexlink = "ffffffff"
+        end
+        
+        -- Build item link
+        local browse_itemlink = "|c" .. browse_rarityhexlink 
+                                .. "|Hitem:" 
+                                .. itemid 
+                                .. ":0:0:0|h[" 
+                                .. itemname 
+                                .. "]|h|r"
+        
+        -- Insert a record into LootTracker_BrowseTable
+        local newIndex = table.getn(LootTracker_BrowseTable) + 1
+        LootTracker_BrowseTable[newIndex] = {
+          timestamp   = timestampVal,
+          playername  = playername,
+          itemname    = browse_itemlink,       -- link version
+          itemnamenolink = itemname,           -- plain text (for sorting)
+          cost        = costVal,
+          offspec     = offspecVal,
+          de          = deVal,
+          itemid      = itemid,               -- for tooltips
+          oldplayergp = LootTrackerDB[raidid][index][LootTracker_dbfield_oldplayergp],
+          newplayergp = LootTrackerDB[raidid][index][LootTracker_dbfield_newplayergp],
+          raidid      = raidid,
+          originalindex = index
+        }
+      end
+    end
+    
+    -- Sorting logic (if you still use sortfield/sortdirection)
+    if sortfield == LootTracker_dbfield_timestamp then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp > b.timestamp end)
+      end
+    elseif sortfield == LootTracker_dbfield_playername then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.playername < b.playername end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.playername > b.playername end)
+      end
+    elseif sortfield == LootTracker_dbfield_itemname then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.itemnamenolink < b.itemnamenolink end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return a.itemnamenolink > b.itemnamenolink end)
+      end
+    elseif sortfield == LootTracker_dbfield_cost then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return tonumber(a.cost) < tonumber(b.cost) end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return tonumber(a.cost) > tonumber(b.cost) end)
+      end
+    elseif sortfield == LootTracker_dbfield_offspec then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.offspec) < tostring(b.offspec) end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.offspec) > tostring(b.offspec) end)
+      end
+    elseif sortfield == LootTracker_dbfield_de then
+      if sortdirection == "ascending" then
+        table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.de) < tostring(b.de) end)
+      else
+        table.sort(LootTracker_BrowseTable, function(a,b) return tostring(a.de) > tostring(b.de) end)
+      end
+    else
+      -- Default to sorting by timestamp ascending if none is set
+      table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
+    end
+  else
+    -- If raid not found, show "no Raid found: ..."
+    getglobal("LootTracker_TotalLootText"):SetText("no Raid found: " .. raidid)
+    getglobal("LootTracker_TotalLootTextValue"):SetText("0 items")
+    
+    -- Possibly open your RaidID frame if user left-clicked from somewhere
+    -- if (arg1) and (arg1 == "LeftButton") then
+    --   ...
+    -- end
+  end
+  
+  -- Finally, update the UI
+  LootTracker_ListScrollFrame_Update()
 end
 
 function LootTracker_ListScrollFrame_Update()
