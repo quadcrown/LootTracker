@@ -2,15 +2,17 @@ local CostDB,browse_rarityhexlink,cost,cost_orig,guildName,lootid,oldplayergp,ra
 sortfield,timestamp_detail,timestamp_raidid,you,zonename
 
 local LootTrackerOptions_DefaultSettings = {
-	enabled = true,
-	uncommon = false,
-	common = false,
-	rare = true,
-	epic = true,
-	legendary = true,
-	timestamp = false,
-	cost = false,
+  enabled = true,
+  uncommon = false,
+  common = false,
+  rare = true,
+  epic = true,
+  legendary = true,
+  timestamp = false,
+  cost = false,
+  sortByRarity = false, -- new
 }
+
 
 local LootTrackerBlacklist_DefaultSettings = {
 		"Nexus Crystal"
@@ -514,7 +516,7 @@ function LootTracker_RecalcDB()
 end
 
 function LootTracker_ExportRaid(raidid, timestamp, cost)
-  -- Check if the raidid exists in DB
+  -- Check if the raidid is valid
   raidfound = false
   if raidid and (string.len(raidid) >= 1) then
     for k in pairs(LootTrackerDB) do
@@ -527,41 +529,46 @@ function LootTracker_ExportRaid(raidid, timestamp, cost)
   LootTracker_ExportData = nil
   
   if raidfound == true then
-    -- Step 1) Build a local itemsToExport table
+    -- STEP 1) Gather items in a table so we can sort them
     local itemsToExport = {}
     for index in LootTrackerDB[raidid] do
       table.insert(itemsToExport, {
-        index   = index, 
-        item    = LootTrackerDB[raidid][index],
+        index = index,
+        data  = LootTrackerDB[raidid][index],
       })
     end
     
-    -- Our order: Uncommon -> Common -> Rare -> Epic -> Legendary
-    local raritySortOrder = {
-      ["uncommon"]  = 1,
-      ["common"]    = 2,
-      ["rare"]      = 3,
-      ["epic"]      = 4,
-      ["legendary"] = 5
-    }
-    
-    -- Step 2) Sort items by rarity
-    table.sort(itemsToExport, function(a, b)
-      local rA = raritySortOrder[a.item[LootTracker_dbfield_rarity]] or 999
-      local rB = raritySortOrder[b.item[LootTracker_dbfield_rarity]] or 999
-      
-      -- If same rarity, you can either break the tie by item name or timestamp
-      if rA == rB then
-        -- Example: tie‐break by item name
-        local nameA = a.item[LootTracker_dbfield_itemname] or ""
-        local nameB = b.item[LootTracker_dbfield_itemname] or ""
-        return nameA < nameB
-      else
-        return rA < rB
-      end
-    end)
-    
-    -- Step 3) Build the output lines
+    -- STEP 2) Conditionally sort the table based on user toggle
+    if LootTrackerOptions["sortByRarity"] == true then
+      -- Sort by rarity (and optional tie-break by item name)
+      local raritySortOrder = {
+        ["uncommon"]  = 1,
+        ["common"]    = 2,
+        ["rare"]      = 3,
+        ["epic"]      = 4,
+        ["legendary"] = 5,
+      }
+      table.sort(itemsToExport, function(a, b)
+        local ra = raritySortOrder[a.data[LootTracker_dbfield_rarity]] or 999
+        local rb = raritySortOrder[b.data[LootTracker_dbfield_rarity]] or 999
+        
+        if ra == rb then
+          -- e.g. tie-break by item name
+          local nameA = a.data[LootTracker_dbfield_itemname] or ""
+          local nameB = b.data[LootTracker_dbfield_itemname] or ""
+          return nameA < nameB
+        else
+          return ra < rb
+        end
+      end)
+    else
+      -- Sort by time looted (or numeric index)
+      table.sort(itemsToExport, function(a, b)
+        return a.index < b.index
+      end)
+    end
+
+    -- Define a quick map from rarity -> bracket label
     local rarityLabels = {
       ["common"]    = "[Common]",
       ["uncommon"]  = "[Uncommon]",
@@ -570,33 +577,34 @@ function LootTracker_ExportRaid(raidid, timestamp, cost)
       ["legendary"] = "[Legendary]"
     }
     
+    -- STEP 3) Build the export string
     LootTracker_ExportData = raidid .. "\r\n\r\n"
     
     for _, entry in ipairs(itemsToExport) do
-      local itemEntry = entry.item
+      local itemEntry = entry.data
       
-      -- optional timestamp
+      -- If user wants timestamps in the export
       if timestamp == true then
         LootTracker_ExportData = LootTracker_ExportData 
-                              .. itemEntry[LootTracker_dbfield_timestamp] 
-                              .. " - "
+          .. (itemEntry[LootTracker_dbfield_timestamp] or "") 
+          .. " - "
       end
       
-      -- Add [Rarity] <ItemName>
-      local itemRarity = itemEntry[LootTracker_dbfield_rarity]
+      -- Insert "[Rarity] ItemName"
+      local itemRarity = itemEntry[LootTracker_dbfield_rarity] or ""
       local rarityText = rarityLabels[itemRarity] or "[Unknown]"
       LootTracker_ExportData = LootTracker_ExportData 
-                            .. rarityText 
-                            .. " " 
-                            .. itemEntry[LootTracker_dbfield_itemname]
+        .. rarityText 
+        .. " " 
+        .. (itemEntry[LootTracker_dbfield_itemname] or "")
       
-      -- Player or Disenchanted
+      -- Disenchant vs. Player Name
       if itemEntry[LootTracker_dbfield_de] == true then
         LootTracker_ExportData = LootTracker_ExportData .. ": disenchanted"
       else
         LootTracker_ExportData = LootTracker_ExportData 
-                              .. ": " 
-                              .. itemEntry[LootTracker_dbfield_playername]
+          .. ": " 
+          .. (itemEntry[LootTracker_dbfield_playername] or "")
       end
       
       -- Offspec
@@ -607,18 +615,24 @@ function LootTracker_ExportRaid(raidid, timestamp, cost)
       -- Cost
       if cost and itemEntry[LootTracker_dbfield_de] == false then
         LootTracker_ExportData = LootTracker_ExportData 
-                              .. " - " 
-                              .. itemEntry[LootTracker_dbfield_cost]
+          .. " - " 
+          .. (itemEntry[LootTracker_dbfield_cost] or "0")
       end
       
       LootTracker_ExportData = LootTracker_ExportData .. "\r\n"
     end
     
-    -- Place final text into the export box
+    -- STEP 4) Display the export text box
+    LootTracker_ExportRaidFrameEditBox1:SetFont("Fonts\\FRIZQT__.TTF", "8")
+    LootTracker_ExportRaidFrameEditBox1Left:Hide()
+    LootTracker_ExportRaidFrameEditBox1Middle:Hide()
+    LootTracker_ExportRaidFrameEditBox1Right:Hide()
+    
     LootTracker_ExportRaidFrameEditBox1:SetText(LootTracker_ExportData)
     ShowUIPanel(LootTracker_ExportRaidFrame, 1)
   end
 end
+
 
 
 ---------------------------------------------------------
@@ -1132,122 +1146,139 @@ function LootTracker_OptionsButton_OnClick()
 end
 
 function LootTracker_OptionsFrame_OnShow()
-	if LootTrackerOptions["enabled"] == true then
-		getglobal("LootTracker_OptionsFrameOption1"):SetChecked(true)
-		getglobal("LootTracker_OptionsFrameOption2"):Enable()
-		getglobal("LootTracker_OptionsFrameOption3"):Enable()
-		getglobal("LootTracker_OptionsFrameOption4"):Enable()
-		getglobal("LootTracker_OptionsFrameOption5"):Enable()
-		getglobal("LootTracker_OptionsFrameOption6"):Enable()
-	else
-		getglobal("LootTracker_OptionsFrameOption1"):SetChecked(false)
-		getglobal("LootTracker_OptionsFrameOption2"):Disable()
-		getglobal("LootTracker_OptionsFrameOption3"):Disable()
-		getglobal("LootTracker_OptionsFrameOption4"):Disable()
-		getglobal("LootTracker_OptionsFrameOption5"):Disable()
-		getglobal("LootTracker_OptionsFrameOption6"):Disable()
-	end
-	if LootTrackerOptions["common"] == true then
-		getglobal("LootTracker_OptionsFrameOption2"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption2"):SetChecked(false)
-	end
-	if LootTrackerOptions["uncommon"] == true then
-		getglobal("LootTracker_OptionsFrameOption3"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption3"):SetChecked(false)
-	end
-	if LootTrackerOptions["rare"] == true then
-		getglobal("LootTracker_OptionsFrameOption4"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption4"):SetChecked(false)
-	end
-	if LootTrackerOptions["epic"] == true then
-		getglobal("LootTracker_OptionsFrameOption5"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption5"):SetChecked(false)
-	end
-	if LootTrackerOptions["legendary"] == true then
-		getglobal("LootTracker_OptionsFrameOption6"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption6"):SetChecked(false)
-	end
-	if LootTrackerOptions["timestamp"] == true then
-		getglobal("LootTracker_OptionsFrameOption7"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption7"):SetChecked(false)
-	end
-	if LootTrackerOptions["cost"] == true then
-		getglobal("LootTracker_OptionsFrameOption8"):SetChecked(true)
-	else
-		getglobal("LootTracker_OptionsFrameOption8"):SetChecked(false)
-	end
+  -- Enable or Disable the addon
+  if LootTrackerOptions["enabled"] == true then
+    getglobal("LootTracker_OptionsFrameOption1"):SetChecked(true)
+    -- enable other rarity checkboxes
+    getglobal("LootTracker_OptionsFrameOption2"):Enable()
+    getglobal("LootTracker_OptionsFrameOption3"):Enable()
+    getglobal("LootTracker_OptionsFrameOption4"):Enable()
+    getglobal("LootTracker_OptionsFrameOption5"):Enable()
+    getglobal("LootTracker_OptionsFrameOption6"):Enable()
+  else
+    getglobal("LootTracker_OptionsFrameOption1"):SetChecked(false)
+    -- disable other rarity checkboxes
+    getglobal("LootTracker_OptionsFrameOption2"):Disable()
+    getglobal("LootTracker_OptionsFrameOption3"):Disable()
+    getglobal("LootTracker_OptionsFrameOption4"):Disable()
+    getglobal("LootTracker_OptionsFrameOption5"):Disable()
+    getglobal("LootTracker_OptionsFrameOption6"):Disable()
+  end
+
+  -- Common
+  if LootTrackerOptions["common"] == true then
+    getglobal("LootTracker_OptionsFrameOption2"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption2"):SetChecked(false)
+  end
+
+  -- Uncommon
+  if LootTrackerOptions["uncommon"] == true then
+    getglobal("LootTracker_OptionsFrameOption3"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption3"):SetChecked(false)
+  end
+
+  -- Rare
+  if LootTrackerOptions["rare"] == true then
+    getglobal("LootTracker_OptionsFrameOption4"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption4"):SetChecked(false)
+  end
+
+  -- Epic
+  if LootTrackerOptions["epic"] == true then
+    getglobal("LootTracker_OptionsFrameOption5"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption5"):SetChecked(false)
+  end
+
+  -- Legendary
+  if LootTrackerOptions["legendary"] == true then
+    getglobal("LootTracker_OptionsFrameOption6"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption6"):SetChecked(false)
+  end
+
+  -- Timestamp
+  if LootTrackerOptions["timestamp"] == true then
+    getglobal("LootTracker_OptionsFrameOption7"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption7"):SetChecked(false)
+  end
+
+  -- Cost
+  if LootTrackerOptions["cost"] == true then
+    getglobal("LootTracker_OptionsFrameOption8"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption8"):SetChecked(false)
+  end
+
+  -- NEW: Sort by Rarity
+  if LootTrackerOptions["sortByRarity"] == true then
+    getglobal("LootTracker_OptionsFrameOption9"):SetChecked(true)
+  else
+    getglobal("LootTracker_OptionsFrameOption9"):SetChecked(false)
+  end
 end
 
+
 function LootTracker_OptionCheckButton_OnClick(id)
-	if id == 1 then
-		if LootTrackerOptions["enabled"] == true then
-			LootTrackerOptions["enabled"] = false
-			
-			--disable checkbuttons
-			getglobal("LootTracker_OptionsFrameOption2"):Disable()
-			getglobal("LootTracker_OptionsFrameOption3"):Disable()
-			getglobal("LootTracker_OptionsFrameOption4"):Disable()
-			getglobal("LootTracker_OptionsFrameOption5"):Disable()
-			getglobal("LootTracker_OptionsFrameOption6"):Disable()
-		else
-			LootTrackerOptions["enabled"] = true
-			
-			--enable checkbuttons
-			getglobal("LootTracker_OptionsFrameOption2"):Enable()
-			getglobal("LootTracker_OptionsFrameOption3"):Enable()
-			getglobal("LootTracker_OptionsFrameOption4"):Enable()
-			getglobal("LootTracker_OptionsFrameOption5"):Enable()
-			getglobal("LootTracker_OptionsFrameOption6"):Enable()
-		end
-	elseif id == 2 then
-		if LootTrackerOptions["common"] == true then
-			LootTrackerOptions["common"] = false
-		else
-			LootTrackerOptions["common"] = true
-		end
-	elseif id == 3 then
-		if LootTrackerOptions["uncommon"] == true then
-			LootTrackerOptions["uncommon"] = false
-		else
-			LootTrackerOptions["uncommon"] = true
-		end
-	elseif id == 4 then
-		if LootTrackerOptions["rare"] == true then
-			LootTrackerOptions["rare"] = false
-		else
-			LootTrackerOptions["rare"] = true
-		end
-	elseif id == 5 then
-		if LootTrackerOptions["epic"] == true then
-			LootTrackerOptions["epic"] = false
-		else
-			LootTrackerOptions["epic"] = true
-		end
-	elseif id == 6 then
-		if LootTrackerOptions["legendary"] == true then
-			LootTrackerOptions["legendary"] = false
-		else
-			LootTrackerOptions["legendary"] = true
-		end
-	elseif id == 7 then
-		if LootTrackerOptions["timestamp"] == true then
-			LootTrackerOptions["timestamp"] = false
-		else
-			LootTrackerOptions["timestamp"] = true
-		end
-	elseif id == 8 then
-		if LootTrackerOptions["cost"] == true then
-			LootTrackerOptions["cost"] = false
-		else
-			LootTrackerOptions["cost"] = true
-		end
-	end
+  if id == 1 then
+    -- Toggle enabled
+    if LootTrackerOptions["enabled"] == true then
+      LootTrackerOptions["enabled"] = false
+
+      -- disable other checkbuttons
+      getglobal("LootTracker_OptionsFrameOption2"):Disable()
+      getglobal("LootTracker_OptionsFrameOption3"):Disable()
+      getglobal("LootTracker_OptionsFrameOption4"):Disable()
+      getglobal("LootTracker_OptionsFrameOption5"):Disable()
+      getglobal("LootTracker_OptionsFrameOption6"):Disable()
+    else
+      LootTrackerOptions["enabled"] = true
+
+      -- enable other checkbuttons
+      getglobal("LootTracker_OptionsFrameOption2"):Enable()
+      getglobal("LootTracker_OptionsFrameOption3"):Enable()
+      getglobal("LootTracker_OptionsFrameOption4"):Enable()
+      getglobal("LootTracker_OptionsFrameOption5"):Enable()
+      getglobal("LootTracker_OptionsFrameOption6"):Enable()
+    end
+
+  elseif id == 2 then
+    -- Toggle common
+    LootTrackerOptions["common"] = not LootTrackerOptions["common"]
+
+  elseif id == 3 then
+    -- Toggle uncommon
+    LootTrackerOptions["uncommon"] = not LootTrackerOptions["uncommon"]
+
+  elseif id == 4 then
+    -- Toggle rare
+    LootTrackerOptions["rare"] = not LootTrackerOptions["rare"]
+
+  elseif id == 5 then
+    -- Toggle epic
+    LootTrackerOptions["epic"] = not LootTrackerOptions["epic"]
+
+  elseif id == 6 then
+    -- Toggle legendary
+    LootTrackerOptions["legendary"] = not LootTrackerOptions["legendary"]
+
+  elseif id == 7 then
+    -- Toggle timestamp
+    LootTrackerOptions["timestamp"] = not LootTrackerOptions["timestamp"]
+
+  elseif id == 8 then
+    -- Toggle cost
+    LootTrackerOptions["cost"] = not LootTrackerOptions["cost"]
+
+  elseif id == 9 then
+    -- NEW: Toggle sortByRarity
+    LootTrackerOptions["sortByRarity"] = not LootTrackerOptions["sortByRarity"]
+
+  end
 end
 
 function LootTracker_OptionsReset_OnClick() 
