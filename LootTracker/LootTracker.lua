@@ -13,6 +13,11 @@ local LootTrackerOptions_DefaultSettings = {
   sortByRarity = false, -- new
 }
 
+local LootTracker_BrowseMode = "raid"
+local LootTracker_SelectedPlayer = nil
+local LootTracker_PlayerBrowseTable = {}
+local LootTracker_SelectedItem = nil
+
 
 local LootTrackerBlacklist_DefaultSettings = {
 		"Nexus Crystal"
@@ -326,15 +331,31 @@ function LootTracker_SlashCommand(msg)
 			LootTrackerOptions["cost"] = true
 			DEFAULT_CHAT_FRAME:AddMessage("Exporting with GP price: |cff00ff00enabled|r")
 		end
-	else
-		if (LootTracker_BrowseFrame:IsVisible() or LootTracker_RaidIDFrame:IsVisible()) then
-			LootTracker_BrowseFrame:Hide()
-			LootTracker_RaidIDFrame:Hide()
-      DEFAULT_CHAT_FRAME:AddMessage("|cffa335eeLootTracker|r: Type \'/lt help\' or \'/loottracker help\' for more options.")
-		else
-			ShowUIPanel(LootTracker_BrowseFrame, 1)
-		end
-	end
+    else
+        if (LootTracker_BrowseFrame:IsVisible() or LootTracker_RaidIDFrame:IsVisible() or LootTracker_PlayerFrame:IsVisible()) then
+            LootTracker_BrowseFrame:Hide()
+            LootTracker_RaidIDFrame:Hide()
+            LootTracker_PlayerFrame:Hide()
+            DEFAULT_CHAT_FRAME:AddMessage("|cffa335eeLootTracker|r: Type \'/lt help\' or \'/loottracker help\' for more options.")
+        else
+            ShowUIPanel(LootTracker_BrowseFrame, 1)
+        end
+    end
+end
+
+function LootTracker_HandleRaidIDInput()
+    local input = getglobal("LootTracker_RaidIDBox"):GetText()
+    if string.sub(input, 1, 5) == "Item:" then
+        local itemName = string.sub(input, 6)
+        itemName = string.gsub(itemName, "^%s*(.-)%s*$", "%1") -- trim whitespace
+        LootTracker_BuildItemBrowseTable(itemName)
+    elseif string.sub(input, 1, 7) == "Player:" then
+        local playerName = string.sub(input, 8)
+        playerName = string.gsub(playerName, "^%s*(.-)%s*$", "%1") -- trim whitespace
+        LootTracker_BuildPlayerBrowseTable(playerName)
+    else
+        LootTracker_BuildBrowseTable()
+    end
 end
 
 function LootTracker_GetCosts(itemid)
@@ -647,6 +668,85 @@ function LootTracker_ExportRaid(raidid, timestamp, cost)
   end
 end
 
+function LootTracker_ExportPlayer(playername, timestamp, cost)
+    -- Check if there are items to export
+    if not LootTracker_BrowseTable or getn(LootTracker_BrowseTable) == 0 then
+        DEFAULT_CHAT_FRAME:AddMessage("No items to export for player: " .. playername)
+        return
+    end
+    
+    -- Create a copy of LootTracker_BrowseTable for exporting
+    local playerItemsToExport = {}
+    for _, item in ipairs(LootTracker_BrowseTable) do
+        table.insert(playerItemsToExport, item)
+    end
+    
+    -- Define rarity sort order and labels
+    local raritySortOrder = {
+        ["common"]    = 1,
+        ["uncommon"]  = 2,
+        ["rare"]      = 3,
+        ["epic"]      = 4,
+        ["legendary"] = 5,
+    }
+    local rarityLabels = {
+        ["common"]    = "[Common]",
+        ["uncommon"]  = "[Uncommon]",
+        ["rare"]      = "[Rare]",
+        ["epic"]      = "[Epic]",
+        ["legendary"] = "[Legendary]"
+    }
+    
+    -- If sortByRarity is enabled, sort the items by rarity
+    if LootTrackerOptions["sortByRarity"] == true then
+        table.sort(playerItemsToExport, function(a, b)
+            local ra = raritySortOrder[a.rarity] or 999
+            local rb = raritySortOrder[b.rarity] or 999
+            if ra == rb then
+                return a.itemnamenolink < b.itemnamenolink
+            else
+                return ra < rb
+            end
+        end)
+    end
+    -- Otherwise, keep the order as in LootTracker_BrowseTable (sorted by timestamp)
+    
+    -- Build the export string
+    local exportData = "Loot for player: " .. playername .. "\r\n\r\n"
+    for _, item in ipairs(playerItemsToExport) do
+        -- Add timestamp if enabled
+        if timestamp then
+            exportData = exportData .. item.timestamp .. " - "
+        end
+        -- Add rarity label
+        local rarityText = rarityLabels[item.rarity] or "[Unknown]"
+        exportData = exportData .. rarityText .. " " .. item.itemname
+        -- Handle disenchanted items
+        if item.de == true then
+            exportData = exportData .. ": disenchanted"
+        else
+            exportData = exportData .. ": " .. item.playername
+        end
+        -- Add offspec flag if applicable
+        if item.offspec == true then
+            exportData = exportData .. " - offspec"
+        end
+        -- Add cost if enabled and not disenchanted
+        if cost and item.de == false then
+            exportData = exportData .. " - " .. item.cost
+        end
+        exportData = exportData .. "\r\n"
+    end
+    
+    -- Display the export text box
+    LootTracker_ExportRaidFrameEditBox1:SetFont("Fonts\\FRIZQT__.TTF", "8")
+    LootTracker_ExportRaidFrameEditBox1Left:Hide()
+    LootTracker_ExportRaidFrameEditBox1Middle:Hide()
+    LootTracker_ExportRaidFrameEditBox1Right:Hide()
+    
+    LootTracker_ExportRaidFrameEditBox1:SetText(exportData)
+    ShowUIPanel(LootTracker_ExportRaidFrame, 1)
+end
 
 
 ---------------------------------------------------------
@@ -681,6 +781,7 @@ function LootTracker_RaidIDButton_OnClick()
 end
 
 function LootTracker_BuildBrowseTable(searchTerm)
+  LootTracker_BrowseMode = "raid"
   -- If no searchTerm is passed, treat it as an empty string (no filter).
   if not searchTerm then
     searchTerm = ""
@@ -828,29 +929,26 @@ function LootTracker_BuildBrowseTable(searchTerm)
 end
 
 function LootTracker_ListScrollFrame_Update()
-	--set GUI Total Loots (per Raid)
-	if not LootTracker_BrowseTable then 
-		LootTracker_BrowseTable = {}
-	end
-	
-	if not raidid then
-		raidid = getglobal("LootTracker_RaidIDBox"):GetText()
-	end
-	
-	local maxlines = getn(LootTracker_BrowseTable)
-	getglobal("LootTracker_TotalLootText"):SetText("Raid: " .. raidid .. ":")
-	if maxlines == 1 then
-		getglobal("LootTracker_TotalLootTextValue"):SetText(maxlines .. " item")
-	else
-		getglobal("LootTracker_TotalLootTextValue"):SetText(maxlines .. " items")
-	end
-	
-	
-	local line; -- 1 through 20 of our window to scroll
-	local lineplusoffset; -- an index into our data calculated from the scroll offset
-   
-	 -- maxlines is max entries, 1 is number of lines, 16 is pixel height of each line
-	FauxScrollFrame_Update(LootTracker_ListScrollFrame, maxlines, 1, 16)
+    if not LootTracker_BrowseTable then 
+        LootTracker_BrowseTable = {}
+    end
+    
+    local maxlines = getn(LootTracker_BrowseTable)
+    if LootTracker_BrowseMode == "raid" then
+        local raidid = getglobal("LootTracker_RaidIDBox"):GetText()
+        getglobal("LootTracker_TotalLootText"):SetText("Raid: " .. raidid .. ":")
+        getglobal("LootTracker_TotalLootTextValue"):SetText(maxlines .. (maxlines == 1 and " item" or " items"))
+    elseif LootTracker_BrowseMode == "player" then
+        getglobal("LootTracker_TotalLootText"):SetText("Player: " .. LootTracker_SelectedPlayer .. ":")
+        getglobal("LootTracker_TotalLootTextValue"):SetText(maxlines .. (maxlines == 1 and " item" or " items"))
+    elseif LootTracker_BrowseMode == "item" then
+        getglobal("LootTracker_TotalLootText"):SetText("Items containing \"" .. LootTracker_SelectedItem .. "\":")
+        getglobal("LootTracker_TotalLootTextValue"):SetText(maxlines .. (maxlines == 1 and " loot" or " loots"))
+    end
+    
+    local line; -- 1 through 20 of our window to scroll
+    local lineplusoffset; -- an index into our data calculated from the scroll offset
+    FauxScrollFrame_Update(LootTracker_ListScrollFrame, maxlines, 1, 16)
 
 
 	for line=1,20 do
@@ -979,19 +1077,20 @@ function LootTracker_ListButton_OnLeave()
 end
 
 function LootTracker_ExportButton_OnClick()
-	raidid = getglobal("LootTracker_RaidIDBox"):GetText()
-	
-	--LootTracker_ExportRaid(raidid, LootTrackerOptions["timestamp"], LootTrackerOptions["cost"])
-
-	if LootTrackerOptions["timestamp"] == false and LootTrackerOptions["cost"] == false then
-		LootTracker_ExportRaid(raidid, false, false)
-	elseif LootTrackerOptions["timestamp"] == false and LootTrackerOptions["cost"] == true then
-		LootTracker_ExportRaid(raidid, false, true)
-	elseif LootTrackerOptions["timestamp"] == true and LootTrackerOptions["cost"] == false then
-		LootTracker_ExportRaid(raidid, true, false)
-	elseif LootTrackerOptions["timestamp"] ==  true and LootTrackerOptions["cost"] == true then
-		LootTracker_ExportRaid(raidid, true, true)
-	end
+    if LootTracker_BrowseMode == "raid" then
+        raidid = getglobal("LootTracker_RaidIDBox"):GetText()
+        if LootTrackerOptions["timestamp"] == false and LootTrackerOptions["cost"] == false then
+            LootTracker_ExportRaid(raidid, false, false)
+        elseif LootTrackerOptions["timestamp"] == false and LootTrackerOptions["cost"] == true then
+            LootTracker_ExportRaid(raidid, false, true)
+        elseif LootTrackerOptions["timestamp"] == true and LootTrackerOptions["cost"] == false then
+            LootTracker_ExportRaid(raidid, true, false)
+        elseif LootTrackerOptions["timestamp"] == true and LootTrackerOptions["cost"] == true then
+            LootTracker_ExportRaid(raidid, true, true)
+        end
+    elseif LootTracker_BrowseMode == "player" then
+        LootTracker_ExportPlayer(LootTracker_SelectedPlayer, LootTrackerOptions["timestamp"], LootTrackerOptions["cost"])
+    end
 end
 
 ---------------------------------------------------------
@@ -1054,6 +1153,169 @@ function LootTracker_RaidIDListButton_OnClick(button)
 	HideUIPanel(LootTracker_RaidIDFrame, 1)
 	LootTracker_BuildBrowseTable()
 	
+end
+
+function LootTracker_PlayerButton_OnClick()
+    if LootTracker_PlayerFrame:IsVisible() then
+        LootTracker_PlayerFrame:Hide()
+    else
+        LootTracker_PlayerScrollFrame_Update()
+        ShowUIPanel(LootTracker_PlayerFrame, 1)
+    end
+end
+
+function LootTracker_PlayerScrollFrame_Update()
+    local playerSet = {}
+    for raidid, items in pairs(LootTrackerDB) do
+        for _, item in ipairs(items) do
+            local playername = item[LootTracker_dbfield_playername]
+            if playername and not playerSet[playername] then
+                playerSet[playername] = true
+            end
+        end
+    end
+    LootTracker_PlayerBrowseTable = {}
+    for playername in pairs(playerSet) do
+        table.insert(LootTracker_PlayerBrowseTable, playername)
+    end
+    table.sort(LootTracker_PlayerBrowseTable)
+    local maxlines = getn(LootTracker_PlayerBrowseTable)
+    FauxScrollFrame_Update(LootTracker_PlayerScrollFrame, maxlines, 10, 16)
+    for line=1,10 do
+        local lineplusoffset = line + FauxScrollFrame_GetOffset(LootTracker_PlayerScrollFrame)
+        if lineplusoffset <= maxlines then
+            getglobal("LootTracker_PlayerList"..line.."TextRaidID"):SetText(LootTracker_PlayerBrowseTable[lineplusoffset])
+            getglobal("LootTracker_PlayerList"..line):Show()
+        else
+            getglobal("LootTracker_PlayerList"..line):Hide()
+        end
+    end
+end
+
+function LootTracker_PlayerListButton_OnClick(button)
+    local playername = getglobal(this:GetName().."TextRaidID"):GetText()
+    LootTracker_SelectedPlayer = playername
+    getglobal("LootTracker_RaidIDBox"):SetText("Player: " .. playername)
+    HideUIPanel(LootTracker_PlayerFrame, 1)
+    LootTracker_BuildPlayerBrowseTable(playername)
+end
+
+function LootTracker_BuildItemBrowseTable(itemName)
+    LootTracker_BrowseMode = "item"
+    LootTracker_BrowseTable = {}
+
+    -- Extract the search term after "Item:"
+    local searchTerm
+    local prefix = "Item:"
+    if string.sub(itemName, 1, string.len(prefix)) == prefix then
+        searchTerm = string.sub(itemName, string.len(prefix) + 1)
+    else
+        searchTerm = itemName
+    end
+    searchTerm = string.gsub(searchTerm, "^%s*(.-)%s*$", "%1") -- trim whitespace
+
+    if not searchTerm or searchTerm == "" then return end -- If no valid search term, exit early
+
+    -- Search through the database for partial matches
+    for raidid, items in pairs(LootTrackerDB) do
+        for index, item in ipairs(items) do
+            if string.find(string.lower(item[LootTracker_dbfield_itemname]), string.lower(searchTerm), 1, true) then
+                local timestampVal = item[LootTracker_dbfield_timestamp]
+                local playername = item[LootTracker_dbfield_playername]
+                local itemid = item[LootTracker_dbfield_itemid]
+                local rarityKey = item[LootTracker_dbfield_rarity]
+                local costVal = item[LootTracker_dbfield_cost]
+                local offspecVal = item[LootTracker_dbfield_offspec]
+                local deVal = item[LootTracker_dbfield_de]
+                local browse_rarityhexlink
+                if rarityKey == "common" then
+                    browse_rarityhexlink = LootTracker_color_common
+                elseif rarityKey == "uncommon" then
+                    browse_rarityhexlink = LootTracker_color_uncommon
+                elseif rarityKey == "rare" then
+                    browse_rarityhexlink = LootTracker_color_rare
+                elseif rarityKey == "epic" then
+                    browse_rarityhexlink = LootTracker_color_epic
+                elseif rarityKey == "legendary" then
+                    browse_rarityhexlink = LootTracker_color_legendary
+                else
+                    browse_rarityhexlink = "ffffffff"
+                end
+                local browse_itemlink = "|c" .. browse_rarityhexlink .. "|Hitem:" .. itemid .. ":0:0:0|h[" .. item[LootTracker_dbfield_itemname] .. "]|h|r"
+                table.insert(LootTracker_BrowseTable, {
+                    timestamp = timestampVal,
+                    playername = playername,
+                    itemname = browse_itemlink,
+                    itemnamenolink = item[LootTracker_dbfield_itemname],
+                    cost = costVal,
+                    offspec = offspecVal,
+                    de = deVal,
+                    itemid = itemid,
+                    raidid = raidid,
+                    originalindex = index
+                })
+            end
+        end
+    end
+
+    -- Store the original search term for display
+    LootTracker_SelectedItem = searchTerm
+
+    -- Sort by timestamp
+    table.sort(LootTracker_BrowseTable, function(a, b) return a.timestamp < b.timestamp end)
+    LootTracker_ListScrollFrame_Update()
+end
+
+function LootTracker_BuildPlayerBrowseTable(playername)
+    LootTracker_BrowseMode = "player"
+    LootTracker_BrowseTable = {}
+    for raidid, items in pairs(LootTrackerDB) do
+        for index, item in ipairs(items) do
+            if item[LootTracker_dbfield_playername] == playername then
+                local timestampVal = item[LootTracker_dbfield_timestamp]
+                local itemname = item[LootTracker_dbfield_itemname]
+                local itemid = item[LootTracker_dbfield_itemid]
+                local rarityKey = item[LootTracker_dbfield_rarity]
+                local costVal = item[LootTracker_dbfield_cost]
+                local offspecVal = item[LootTracker_dbfield_offspec]
+                local deVal = item[LootTracker_dbfield_de]
+                local browse_rarityhexlink
+                if rarityKey == "common" then
+                    browse_rarityhexlink = LootTracker_color_common
+                elseif rarityKey == "uncommon" then
+                    browse_rarityhexlink = LootTracker_color_uncommon
+                elseif rarityKey == "rare" then
+                    browse_rarityhexlink = LootTracker_color_rare
+                elseif rarityKey == "epic" then
+                    browse_rarityhexlink = LootTracker_color_epic
+                elseif rarityKey == "legendary" then
+                    browse_rarityhexlink = LootTracker_color_legendary
+                else
+                    browse_rarityhexlink = "ffffffff"
+                end
+                local browse_itemlink = "|c" .. browse_rarityhexlink .. "|Hitem:" .. itemid .. ":0:0:0|h[" .. itemname .. "]|h|r"
+                table.insert(LootTracker_BrowseTable, {
+                    timestamp = timestampVal,
+                    playername = playername,
+                    itemname = browse_itemlink,
+                    itemnamenolink = itemname,
+                    cost = costVal,
+                    offspec = offspecVal,
+                    de = deVal,
+                    itemid = itemid,
+                    raidid = raidid,
+                    originalindex = index,
+					rarity = rarityKey
+                })
+            end
+        end
+    end
+    -- Sort by timestamp
+    table.sort(LootTracker_BrowseTable, function(a,b) return a.timestamp < b.timestamp end)
+    if getn(LootTracker_BrowseTable) > 0 then
+        LootTracker_SelectedPlayer = LootTracker_BrowseTable[1].playername
+    end
+    LootTracker_ListScrollFrame_Update()
 end
 
 function LootTracker_RaidIDListButton_OnEnter()
