@@ -5,6 +5,9 @@ Tracks loot in World of Warcraft 1.12
 - Added functionality to work when on group loot for logging loot
 - Added in sorting by rarity for exporting
 - Added a search box to search the current RaidID/loot list for items of interest
+- **Added new function to browse item loot instances by Player name with associated button to search for the player of interest**
+- **Added search via item specifically (can put in RaidID search bar Item:Gauntlets and it will show all instances through all raids by that string. Returns all instances where an item with the word Gauntlets was looted in every saved instance.**
+- **Export by player name**
 
 ### You can import your own GP Cost / DKP Cost
 Just edit the table in the file LootTrackerGP.lua / You need the itemid and the price
