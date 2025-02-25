@@ -475,7 +475,7 @@
 					<OnTabPressed>
 					</OnTabPressed>
 					<OnEnterPressed>
-						LootTracker_BuildBrowseTable()
+						LootTracker_HandleRaidIDInput()
 						this:ClearFocus();
 					</OnEnterPressed>
 				</Scripts>
@@ -494,6 +494,23 @@
 				<Scripts>
 					<OnClick>
 						LootTracker_RaidIDButton_OnClick();
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerButton" inherits="UIPanelButtonTemplate" text="Browse Players">
+				<Size>
+					<AbsDimension x="100" y="22"/>
+				</Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="LootTracker_RaidIDButton" relativePoint="RIGHT">
+						<Offset>
+							<AbsDimension x="5" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerButton_OnClick();
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -1260,6 +1277,236 @@
 						</Offset>
 					</Anchor>
 				</Anchors>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnMouseDown>
+				if ( not this.isMoving ) then
+				this:StartMoving();
+				this.isMoving = true;
+				end
+			</OnMouseDown>
+			<OnMouseUp>
+				if ( this.isMoving) then
+				this:StopMovingOrSizing();
+				this.isMoving = false;
+				end
+			</OnMouseUp>
+		</Scripts>
+	</Frame>
+
+	<Frame name="LootTracker_PlayerFrame" frameStrata="DIALOG" toplevel="true" parent="UIParent" movable="true" enableMouse="true" hidden="true" clampedToScreen="true">
+		<Size>
+			<AbsDimension x="220" y="200"/>
+		</Size>
+		<Anchors>
+			<Anchor point="CENTER">
+				<Offset>
+					<AbsDimension x="0" y="0"/>
+				</Offset>
+			</Anchor>
+		</Anchors>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString name="LootTracker_PlayerFrameText" inherits="GameFontDisable" text="Players:">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+							<Offset>
+								<AbsDimension x="11" y="-13"/>
+							</Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset bottom="4" left="4" right="4" top="4"></AbsInset>
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32"></AbsValue>
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="16"></AbsValue>
+			</EdgeSize>
+		</Backdrop>
+		<Frames>
+			<Button inherits="UIPanelCloseButton" name="$parent_CloseButton">
+				<Anchors>
+					<Anchor point="TOPRIGHT">
+						<Offset>
+							<AbsDimension x="0" y="0"></AbsDimension>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>LootTracker_PlayerFrame:Hide();</OnClick>
+				</Scripts>
+			</Button>
+			<ScrollFrame name="LootTracker_PlayerScrollFrame" inherits="FauxScrollFrameTemplate">
+				<Size>
+					<AbsDimension x="20" y="158"/>
+				</Size>
+				<Anchors>
+					<Anchor point="TOPLEFT">
+						<Offset>
+							<AbsDimension x="0" y="-30"/>
+						</Offset>
+					</Anchor>
+					<Anchor point="BOTTOMRIGHT">
+						<Offset>
+							<AbsDimension x="-33" y="10"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnVerticalScroll>
+						FauxScrollFrame_OnVerticalScroll(16, LootTracker_PlayerScrollFrame_Update);
+					</OnVerticalScroll>
+					<OnShow>
+						LootTracker_PlayerScrollFrame_Update()
+					</OnShow>
+				</Scripts>
+			</ScrollFrame>
+			<Button name="LootTracker_PlayerList1" inherits="LootTracker_RaidIDListButton" id="1" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT">
+						<Offset>
+							<AbsDimension x="10" y="-30"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList2" inherits="LootTracker_RaidIDListButton" id="2" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList1" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList3" inherits="LootTracker_RaidIDListButton" id="3" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList2" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList4" inherits="LootTracker_RaidIDListButton" id="4" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList3" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList5" inherits="LootTracker_RaidIDListButton" id="5" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList4" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList6" inherits="LootTracker_RaidIDListButton" id="6" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList5" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList7" inherits="LootTracker_RaidIDListButton" id="7" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList6" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList8" inherits="LootTracker_RaidIDListButton" id="8" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList7" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList9" inherits="LootTracker_RaidIDListButton" id="9" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList8" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="LootTracker_PlayerList10" inherits="LootTracker_RaidIDListButton" id="10" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="LootTracker_PlayerList9" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootTracker_PlayerListButton_OnClick(arg1);
+					</OnClick>
+				</Scripts>
 			</Button>
 		</Frames>
 		<Scripts>
